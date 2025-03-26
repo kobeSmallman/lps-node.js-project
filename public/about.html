@@ -669,7 +669,7 @@ return originalStr.substring(origStart, origEnd + 1);</pre>
             <li>Map indices back to the original string (with spaces) for the final result</li>
           </ul>
           
-          <p><strong>Key Insight:</strong> The DP approach avoids redundant calculations by storing results of subproblems. This makes it significantly faster than the naive approach for medium-sized inputs.</p>
+          <p><strong>Key Insight:</strong> The DP approach avoids redundant calculations by storing results of subproblems. In theory, this can make it more efficient than the naive approach for certain input patterns, though our optimized implementations may perform differently in practice.</p>
           
           <h4>Actual Code Implementation:</h4>
           <div class="code-block">
@@ -888,8 +888,8 @@ return originalStr.substring(origStart, origEnd + 1);</pre>
             <p><strong>Optimized Approach for Large Inputs:</strong> This helper function uses the expand-around-center technique (similar to the optimized naive approach) but is conceptually related to dynamic programming. It avoids the memory overhead of the full DP table while maintaining efficiency.</p>
           </div>
           
-          <p><strong>Advantages:</strong> More efficient than naive approach, elegant solution using tabulation, good balance between simplicity and performance.</p>
-          <p><strong>Disadvantages:</strong> Requires O(n²) space for the DP table, which can be memory-intensive for very large inputs.</p>
+          <p><strong>Advantages:</strong> Elegant solution using tabulation to avoid repeated calculations, potentially more efficient than the unoptimized naive approach for certain inputs, good balance between simplicity and performance.</p>
+          <p><strong>Disadvantages:</strong> Requires O(n²) space for the DP table, which can be memory-intensive for very large inputs. May have higher overhead for small inputs compared to the naive approach.</p>
           
           <div class="highlight-info">
             <i class="fas fa-lightbulb"></i> <strong>Implementation Note:</strong> Our implementation automatically falls back to a more memory-efficient algorithm for inputs over 10,000 characters to prevent memory exhaustion. This ensures reliable performance even with exceptionally large texts.
@@ -1116,9 +1116,16 @@ return originalStr.substring(origStart, origEnd + 1);</pre>
             <li>Manacher's algorithm maintains its O(n) complexity but has higher constant overhead that can make it less efficient for smaller inputs</li>
           </ul>
           
-          <p>As a result, you might see the "naive" approach outperforming Manacher's algorithm for certain input sizes. This is not a flaw but a reflection of the practical trade-offs between asymptotic efficiency and implementation overhead.</p>
+          <p>As a result, you might see several counterintuitive performance results:</p>
+          <ul>
+            <li>The "naive" approach may outperform Manacher's algorithm for small to medium inputs</li>
+            <li>The "naive" approach may outperform the dynamic programming approach in many cases, despite their identical O(n²) asymptotic complexity</li>
+            <li>Performance differences may fluctuate based on specific input patterns and system conditions</li>
+          </ul>
           
-          <p>For truly enormous inputs (beyond what most users would submit), Manacher's O(n) approach would eventually outperform any O(n²) approach, regardless of optimizations.</p>
+          <p>These results are not flaws but reflections of the practical trade-offs between asymptotic efficiency, implementation overhead, memory access patterns, and constant factors.</p>
+          
+          <p>For truly enormous inputs (beyond what most users would submit), Manacher's O(n) approach would eventually outperform any O(n²) approach, regardless of optimizations. However, for practical input sizes that most users will test, the theoretical advantages might not always translate to measurable performance gains.</p>
         </div>
       </div>
       
