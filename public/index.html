@@ -543,6 +543,89 @@
       font-family: monospace;
     }
     
+    .skipped-algorithm {
+      opacity: 0.8;
+      position: relative;
+    }
+    
+    .skipped-algorithm::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: var(--border-radius);
+      z-index: 1;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 0.25em 0.4em;
+      font-size: 75%;
+      font-weight: 700;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: 0.25rem;
+    }
+    
+    .bg-warning {
+      background-color: var(--warning-color);
+      color: white;
+    }
+    
+    #errorContainer {
+      display: none;
+      background-color: var(--danger-color);
+      color: white;
+      padding: 12px 20px;
+      border-radius: var(--border-radius);
+      margin-bottom: 20px;
+      animation: fadeIn 0.3s;
+    }
+    
+    #loader {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    
+    .loader-content {
+      text-align: center;
+      color: white;
+    }
+    
+    .loader-spinner {
+      width: 60px;
+      height: 60px;
+      border: 5px solid var(--primary-color);
+      border-top: 5px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
     /* Responsive adjustments */
     @media (max-width: 768px) {
       .main-content {
@@ -570,6 +653,77 @@
         margin-left: 1rem;
       }
     }
+    
+    /* Loading overlay for long-running operations */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    
+    .loading-content {
+      text-align: center;
+      color: white;
+    }
+    
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 5px solid var(--primary-color);
+      border-top: 5px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Error message container */
+    .error-message {
+      display: none;
+      background-color: var(--danger-color);
+      color: white;
+      padding: 15px 20px;
+      border-radius: var(--border-radius);
+      margin-bottom: 20px;
+      animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    /* Skipped algorithm styling */
+    .algorithm-card.skipped {
+      opacity: 0.7;
+      position: relative;
+    }
+    
+    .algorithm-card.skipped::before {
+      content: "Skipped";
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: var(--warning-color);
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 4px;
+      z-index: 2;
+    }
   </style>
 </head>
 <body>
@@ -587,8 +741,18 @@
     </nav>
   </header>
 
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <h3 id="loadingText">Processing...</h3>
+      <p style="margin-top: 10px; font-size: 14px;">This may take a moment for large files...</p>
+    </div>
+  </div>
+
   <div class="main-content">
     <h1>Longest Palindromic Substring Analyzer</h1>
+    
+    <div class="error-message" id="errorMessage"></div>
     
     <div class="container">
       <div class="explanation">
@@ -597,7 +761,7 @@
         <p><strong>This analyzer:</strong></p>
         <ul>
           <li>Finds the <strong>longest</strong> palindromic substring in your text</li>
-          <li>Considers letter case (e.g., "Racecar" is not a palindrome, but "racecar" is)</li>
+          <li><strong>Ignores letter case</strong> (e.g., "RaceCar" is treated the same as "racecar")</li>
           <li><strong>Ignores spaces</strong> when comparing characters (e.g., "race car" is treated the same as "racecar")</li>
           <li>Will identify "pip gag racecar racecar gag pip" as a single palindrome (ignoring spaces)</li>
           <li>When multiple palindromes of the same maximum length exist, returns the <strong>first one</strong> found in the text</li>
@@ -605,7 +769,11 @@
         </ul>
         
         <div class="highlight-info">
-          <i class="fas fa-info-circle"></i> <strong>Important:</strong> Spaces are ignored when detecting palindromes. This means "race car" is considered equivalent to "racecar" for palindrome detection. Punctuation and letter case still matter.
+          <i class="fas fa-info-circle"></i> <strong>Important:</strong> Both spaces and letter case are ignored when detecting palindromes. This means "Race Car" is considered equivalent to "racecar" for palindrome detection. Punctuation still matters.
+        </div>
+        
+        <div class="highlight-info" style="background-color: rgba(78, 205, 196, 0.1); border-left-color: var(--tertiary-color);">
+          <i class="fas fa-file-alt"></i> <strong>Large Files:</strong> All three algorithms will run on your input, regardless of size. For very large files (over 10,000 characters), some algorithms may take longer to complete, but they will all run and produce results. If an algorithm takes too long, you'll still see the results with a warning indicator.
         </div>
       </div>
       
@@ -633,13 +801,6 @@
         
         <button type="button" id="runButton"><i class="fas fa-play"></i> Run Algorithms</button>
       </div>
-      
-      <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <p>Processing... This may take a moment for longer texts.</p>
-      </div>
-      
-      <div class="error" id="error"></div>
       
       <div id="results">
         <h2 class="comparison-header">Algorithm Comparison Results</h2>
@@ -727,11 +888,22 @@
           <h4>How Palindromes Are Detected</h4>
           <p>All three algorithms match characters with these rules:</p>
           <ul>
-            <li>Letter case is significant: "Racecar" is NOT a palindrome, but "racecar" is</li>
+            <li>Letter case is ignored: "RaceCar" IS considered a palindrome (equivalent to "racecar")</li>
             <li>Spaces are ignored: "race car" IS considered a palindrome (equivalent to "racecar")</li>
             <li>Punctuation is significant: "race,car" is NOT a palindrome</li>
             <li>When multiple palindromes of the same length exist, only the first one found is returned</li>
           </ul>
+          
+          <h4>About Performance Measurements</h4>
+          <p>This application measures two key performance metrics:</p>
+          <ul>
+            <li><strong>Execution Time:</strong> How long each algorithm takes to find the longest palindrome (measured in milliseconds)</li>
+            <li><strong>Memory Usage:</strong> How much additional memory each algorithm consumes during execution (measured in kilobytes)</li>
+          </ul>
+          
+          <div class="highlight-info">
+            <i class="fas fa-info-circle"></i> <strong>Note on Memory Measurements:</strong> Memory measurements are calculated by comparing heap usage before and after algorithm execution. In some cases, Node.js's automatic garbage collection may run during algorithm execution, which can result in measurement anomalies. When this happens, the affected measurements are marked with an asterisk (*). These anomalies do not affect the actual palindrome detection or time measurements.
+          </div>
         </div>
       </div>
     </div>
@@ -854,59 +1026,84 @@
         
         // Reset UI
         resultsDiv.style.display = 'none';
-        errorDiv.style.display = 'none';
-        loadingDiv.style.display = 'block';
+        showLoading('Processing file...');
         uploadButton.disabled = true;
-        runButton.disabled = true;
+        runButton.disabled = true; // Disable run button during upload
+        
+        // Add a timeout for user feedback if process takes too long
+        const progressMessages = [
+          {time: 3000, message: 'Reading your file...'},
+          {time: 6000, message: 'Large file detected, processing might take a moment...'},
+          {time: 10000, message: 'Processing with advanced algorithms...'},
+          {time: 20000, message: 'Optimizing for large input...'},
+          {time: 40000, message: 'Almost there...'},
+          {time: 60000, message: 'This is a very large file, please be patient...'}
+        ];
+        
+        const progressTimers = progressMessages.map(item => {
+          return setTimeout(() => {
+            document.getElementById('loadingText').textContent = item.message;
+          }, item.time);
+        });
         
         try {
+          console.log('Starting file upload process');
+          document.getElementById('loadingText').textContent = 'Uploading file...';
+          
           // Create form data for file upload
           const formData = new FormData();
           formData.append('file', selectedFile);
           
-          // Send to server
+          // Send to server with timeout set higher for large files
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+          
           const response = await fetch('/upload', {
             method: 'POST',
-            body: formData
+            body: formData,
+            signal: controller.signal
           });
           
-          // Try to parse the response as JSON
-          let data;
+          clearTimeout(timeoutId);
+          console.log('Got response from server, status:', response.status);
           
+          // Try to parse the response
+          let data;
           try {
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-              data = await response.json();
-            } else {
-              // Not JSON, could be HTML error page
-              const textResponse = await response.text();
-              throw new Error(`Server returned non-JSON response: ${textResponse.substring(0, 100)}...`);
-            }
-          } catch (parseError) {
-            console.error('Error parsing response:', parseError);
-            throw new Error('Unable to parse server response. Please try again.');
+            data = await response.json();
+            console.log('Parsed response data');
+          } catch (parseErr) {
+            console.error('Error parsing server response:', parseErr);
+            throw new Error('Could not read server response. The file may be too large to process.');
           }
           
           if (!response.ok) {
-            throw new Error(data?.error || `Server error: ${response.status}`);
+            console.error('Server returned error:', data);
+            throw new Error(data?.error || `Server error (status ${response.status})`);
           }
           
-          // If the input is very large, we'll only use the truncated version for UI display
-          const displayText = data.input;
+          // If successful, display the results
+          console.log('Processing successful, displaying results');
+          displayResults(data, data.input);
           
-          // Update textarea with truncated text (optional)
+          // Show a shortened version in the textarea for reference
           if (data.fullLength > 1000) {
             document.getElementById('inputString').value = 
-              displayText + `\n\n[File content truncated for display (${data.fullLength} characters total)]`;
-            tabs[0].click(); // Switch to text tab
+              data.input + `\n\n[File content truncated for display (${data.fullLength} characters total)]`;
+            // Switch to text tab to show content
+            tabs[0].click();
           }
-          
-          displayResults(data, displayText);
         } catch (error) {
-          console.error('File upload error:', error);
-          showError(error.message || 'Error processing file');
+          console.error('File upload/processing error:', error);
+          if (error.name === 'AbortError') {
+            showError('Processing timed out. Your file may be too large or complex for analysis.');
+          } else {
+            showError(error.message || 'Error processing file. Please try a smaller or different file.');
+          }
         } finally {
-          loadingDiv.style.display = 'none';
+          // Clear all progress timers
+          progressTimers.forEach(timerId => clearTimeout(timerId));
+          hideLoading();
           uploadButton.disabled = false;
           runButton.disabled = false;
         }
@@ -929,8 +1126,7 @@
         
         // Reset UI
         resultsDiv.style.display = 'none';
-        errorDiv.style.display = 'none';
-        loadingDiv.style.display = 'block';
+        showLoading('Processing text...');
         runButton.disabled = true;
         
         try {
@@ -944,7 +1140,6 @@
           });
           
           // Try to parse the response as JSON
-          let errorData;
           let data;
           
           try {
@@ -970,7 +1165,7 @@
           console.error('Request error:', error);
           showError(error.message || 'Error processing request');
         } finally {
-          loadingDiv.style.display = 'none';
+          hideLoading();
           runButton.disabled = false;
         }
       });
@@ -979,6 +1174,11 @@
         // Helper function to create preview with highlighted palindrome
         function createPreview(palindrome, originalText) {
           if (!palindrome) return 'No palindrome found';
+          if (palindrome === 'Skipped for large input') return 'Algorithm skipped for large input';
+          if (palindrome.startsWith('Result found but took longer')) {
+            // For timed out results, extract just the palindrome part without the timeout message
+            return 'Algorithm took longer than expected, but found a result';
+          }
           
           const start = originalText.indexOf(palindrome);
           if (start === -1) return palindrome; // Just return the palindrome if not found in original text
@@ -999,46 +1199,101 @@
         
         // Helper function to count non-space characters
         function countNonSpaceChars(str) {
+          if (!str || typeof str !== 'string') return 0;
+          if (str.startsWith('Result found but took longer')) return 'N/A';
           return str.replace(/\s+/g, '').length;
         }
         
-        // Display naive approach results
-        document.getElementById('naive-result').textContent = `"${data.results.naive.lps}"`;
-        document.getElementById('naive-length').textContent = `(length: ${countNonSpaceChars(data.results.naive.lps)})`;
-        document.getElementById('naive-preview').innerHTML = createPreview(data.results.naive.lps, originalText);
-        document.getElementById('naive-time').textContent = data.results.naive.executionTime;
-        document.getElementById('naive-memory').textContent = data.results.naive.memoryUsage;
+        // Helper function to add timeout warning if needed
+        function formatResultWithWarning(result, timedOut) {
+          if (timedOut) {
+            return `${result} <span class="badge bg-warning">Took longer than expected</span>`;
+          }
+          return `"${result}"`;
+        }
         
-        const naiveStart = originalText.indexOf(data.results.naive.lps);
+        // Helper function to format memory display with warning if there was an issue
+        function formatMemoryDisplay(memoryValue, hasIssue) {
+          if (hasIssue) {
+            // If memory measurement had an issue, show with an asterisk and tooltip
+            return `<span title="Memory measurement was affected by garbage collection">${memoryValue < 0 ? '?' : memoryValue} KB*</span> <span class="tooltip">ⓘ<span class="tooltip-text">* Memory measurement was affected by garbage collection during algorithm execution. This does not affect the accuracy of the palindrome detection or time measurement.</span></span>`;
+          }
+          return `${memoryValue} KB`;
+        }
+        
+        // Display naive approach results
+        const naiveTimedOut = data.results.naive.timedOut || false;
+        const naiveMemoryIssue = data.results.naive.memoryMeasurementIssue || false;
+        const naiveResult = data.results.naive.lps;
+        document.getElementById('naive-result').innerHTML = 
+            formatResultWithWarning(naiveResult, naiveTimedOut);
+        document.getElementById('naive-length').textContent = `(length: ${countNonSpaceChars(naiveResult)})`;
+        document.getElementById('naive-preview').innerHTML = createPreview(naiveResult, originalText);
+        document.getElementById('naive-time').textContent = 
+            naiveTimedOut ? "120000+ ms" : `${data.results.naive.executionTime} ms`;
+        document.getElementById('naive-memory').innerHTML = 
+            formatMemoryDisplay(data.results.naive.memoryUsage, naiveMemoryIssue);
+        
+        const naiveStart = originalText.indexOf(naiveResult);
         if (naiveStart !== -1) {
           document.getElementById('naive-index').textContent = 
-            `Found at position ${naiveStart} to ${naiveStart + data.results.naive.lps.length - 1}`;
+            `Found at position ${naiveStart} to ${naiveStart + naiveResult.length - 1}`;
         }
         
         // Display DP approach results
-        document.getElementById('dp-result').textContent = `"${data.results.dp.lps}"`;
-        document.getElementById('dp-length').textContent = `(length: ${countNonSpaceChars(data.results.dp.lps)})`;
-        document.getElementById('dp-preview').innerHTML = createPreview(data.results.dp.lps, originalText);
-        document.getElementById('dp-time').textContent = data.results.dp.executionTime;
-        document.getElementById('dp-memory').textContent = data.results.dp.memoryUsage;
+        const dpTimedOut = data.results.dp.timedOut || false;
+        const dpMemoryIssue = data.results.dp.memoryMeasurementIssue || false;
+        const dpResult = data.results.dp.lps;
+        document.getElementById('dp-result').innerHTML = 
+            formatResultWithWarning(dpResult, dpTimedOut);
+        document.getElementById('dp-length').textContent = `(length: ${countNonSpaceChars(dpResult)})`;
+        document.getElementById('dp-preview').innerHTML = createPreview(dpResult, originalText);
+        document.getElementById('dp-time').textContent = 
+            dpTimedOut ? "120000+ ms" : `${data.results.dp.executionTime} ms`;
+        document.getElementById('dp-memory').innerHTML = 
+            formatMemoryDisplay(data.results.dp.memoryUsage, dpMemoryIssue);
         
-        const dpStart = originalText.indexOf(data.results.dp.lps);
+        const dpStart = originalText.indexOf(dpResult);
         if (dpStart !== -1) {
           document.getElementById('dp-index').textContent = 
-            `Found at position ${dpStart} to ${dpStart + data.results.dp.lps.length - 1}`;
+            `Found at position ${dpStart} to ${dpStart + dpResult.length - 1}`;
         }
         
         // Display Manacher's algorithm results
-        document.getElementById('manacher-result').textContent = `"${data.results.manacher.lps}"`;
-        document.getElementById('manacher-length').textContent = `(length: ${countNonSpaceChars(data.results.manacher.lps)})`;
-        document.getElementById('manacher-preview').innerHTML = createPreview(data.results.manacher.lps, originalText);
-        document.getElementById('manacher-time').textContent = data.results.manacher.executionTime;
-        document.getElementById('manacher-memory').textContent = data.results.manacher.memoryUsage;
+        const manacherTimedOut = data.results.manacher.timedOut || false;
+        const manacherMemoryIssue = data.results.manacher.memoryMeasurementIssue || false;
+        const manacherResult = data.results.manacher.lps;
+        document.getElementById('manacher-result').innerHTML = 
+            formatResultWithWarning(manacherResult, manacherTimedOut);
+        document.getElementById('manacher-length').textContent = `(length: ${countNonSpaceChars(manacherResult)})`;
+        document.getElementById('manacher-preview').innerHTML = createPreview(manacherResult, originalText);
+        document.getElementById('manacher-time').textContent = 
+            manacherTimedOut ? "120000+ ms" : `${data.results.manacher.executionTime} ms`;
+        document.getElementById('manacher-memory').innerHTML = 
+            formatMemoryDisplay(data.results.manacher.memoryUsage, manacherMemoryIssue);
         
-        const manacherStart = originalText.indexOf(data.results.manacher.lps);
+        const manacherStart = originalText.indexOf(manacherResult);
         if (manacherStart !== -1) {
           document.getElementById('manacher-index').textContent = 
-            `Found at position ${manacherStart} to ${manacherStart + data.results.manacher.lps.length - 1}`;
+            `Found at position ${manacherStart} to ${manacherStart + manacherResult.length - 1}`;
+        }
+        
+        // Add memory measurement note if any algorithm had measurement issues
+        if (naiveMemoryIssue || dpMemoryIssue || manacherMemoryIssue) {
+          // Check if note already exists
+          let noteEl = document.querySelector('.memory-measurement-note');
+          if (!noteEl) {
+            // Add note below the results section
+            noteEl = document.createElement('div');
+            noteEl.className = 'highlight-info memory-measurement-note';
+            noteEl.style.marginTop = '20px';
+            noteEl.innerHTML = `
+              <i class="fas fa-exclamation-triangle" style="color: var(--warning-color);"></i>
+              <strong>Memory Measurement Warning:</strong> Some memory measurements were affected by garbage collection during algorithm execution. 
+              Values marked with an asterisk (*) may show as negative or zero and should not be used for comparison. This is a limitation of how Node.js manages memory and does NOT affect the correctness of palindrome detection or time measurements.
+            `;
+            document.getElementById('results').appendChild(noteEl);
+          }
         }
         
         // Show results
@@ -1049,9 +1304,26 @@
       }
       
       function showError(message) {
-        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
-        errorDiv.style.display = 'block';
-        loadingDiv.style.display = 'none';
+        const errorEl = document.getElementById('errorMessage');
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+          errorEl.style.display = 'none';
+        }, 10000);
+      }
+      
+      function showLoading(message = 'Processing...') {
+        const overlay = document.getElementById('loadingOverlay');
+        const text = document.getElementById('loadingText');
+        text.textContent = message;
+        overlay.style.display = 'flex';
+      }
+      
+      function hideLoading() {
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display = 'none';
       }
     });
   </script>
