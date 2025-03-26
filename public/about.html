@@ -437,134 +437,101 @@
         <!-- Naive Approach -->
         <div class="algorithm-card naive">
           <h3>Naive Approach <span class="complexity-badge">O(n²)</span></h3>
-          <p>This is a straightforward approach that relies on expanding around potential palindrome centers.</p>
+          <p>This approach finds palindromes by expanding outward from potential centers. While conceptually straightforward, our implementation includes optimizations for handling large inputs efficiently.</p>
           
           <h4>How It Works:</h4>
           <ul class="algorithm-steps">
-            <li>Treat each character and each space between characters as a potential center of a palindrome</li>
-            <li>For each potential center, expand outwards while checking if the expanded substring remains a palindrome</li>
-            <li>Track the longest palindrome found during this process</li>
+            <li>Remove spaces and convert to lowercase for consistent comparison</li>
+            <li>For inputs larger than 5000 characters, use an optimized version that avoids redundant operations</li>
+            <li>For each character position in the string, consider it as a potential center of a palindrome</li>
+            <li>Expand outward from each center while checking if characters match</li>
             <li>Handle both odd-length palindromes (centered at a character) and even-length palindromes (centered between characters)</li>
+            <li>Track the longest palindrome found during this process</li>
+            <li>Map indices back to the original string (with spaces) for the final result</li>
           </ul>
           
-          <div class="code-block">
-            <pre>function expandAroundCenter(s, left, right) {
-  // Skip spaces when comparing characters
-  while (left >= 0 && right < s.length) {
-    if (left > 0 && s[left] === ' ') { left--; continue; }
-    if (right < s.length - 1 && s[right] === ' ') { right++; continue; }
-    if (s[left] !== s[right]) break;
-    left--;
-    right++;
-  }
-  return [left + 1, right - 1]; // Return the palindrome boundaries
-}</pre>
-          </div>
+          <p><strong>Key Insight:</strong> The optimized implementation maintains a conceptual O(n³) approach but with better implementation achieving O(n²) in practice. It uses index mapping to handle spaces correctly.</p>
           
-          <p><strong>Advantages:</strong> Simple to implement and understand, works well for small inputs.</p>
-          <p><strong>Disadvantages:</strong> Less efficient for large inputs due to quadratic time complexity.</p>
+          <p><strong>Advantages:</strong> Simple to understand, works well for small inputs, suitable for educational purposes.</p>
+          <p><strong>Disadvantages:</strong> Less efficient for large inputs compared to more sophisticated algorithms.</p>
+          
+          <div class="highlight-info">
+            <i class="fas fa-lightbulb"></i> <strong>Implementation Note:</strong> Our implementation automatically switches to an optimized version for large inputs (over 5000 characters) while maintaining the same conceptual approach. This significantly improves performance while preserving the characteristics of the naive algorithm.
+          </div>
         </div>
         
         <!-- Dynamic Programming -->
         <div class="algorithm-card dp">
           <h3>Dynamic Programming <span class="complexity-badge">O(n²)</span></h3>
-          <p>This approach builds a table to store whether each substring is a palindrome, using smaller subproblems to solve larger ones.</p>
+          <p>This approach uses a table to store intermediate results, avoiding redundant calculations. Our implementation includes special handling for very large inputs to prevent memory issues.</p>
           
           <h4>How It Works:</h4>
           <ul class="algorithm-steps">
+            <li>Remove spaces and convert to lowercase for consistent comparison</li>
+            <li>For inputs larger than 10,000 characters, switch to a memory-efficient alternative</li>
             <li>Create a 2D table where table[i][j] represents whether the substring from index i to j is a palindrome</li>
-            <li>Initialize all single characters as palindromes (table[i][i] = true)</li>
-            <li>Check all possible substring lengths, filling the table incrementally</li>
-            <li>For a substring to be a palindrome, its outer characters must match and the inner substring must be a palindrome</li>
-            <li>Track the longest palindrome found during this process</li>
+            <li>Initialize all single characters as palindromes (diagonals in the table)</li>
+            <li>Check for palindromes of length 2 (adjacent characters)</li>
+            <li>Build up to longer palindromes using the knowledge of shorter palindromes</li>
+            <li>For a substring to be a palindrome, its outer characters must match and its inner substring must be a palindrome</li>
+            <li>Map indices back to the original string (with spaces) for the final result</li>
           </ul>
           
-          <div class="code-block">
-            <pre>// Initialize DP table
-const dp = Array(n).fill().map(() => Array(n).fill(false));
-
-// All single characters are palindromes
-for (let i = 0; i < n; i++) {
-  dp[i][i] = true;
-}
-
-// Check for palindromes of different lengths
-for (let len = 2; len <= n; len++) {
-  for (let i = 0; i <= n - len; i++) {
-    let j = i + len - 1;
-    
-    // Skip spaces when comparing
-    if (s[i] === ' ') continue;
-    if (s[j] === ' ') continue;
-    
-    // Check if substring is a palindrome
-    if (s[i] === s[j] && (len == 2 || dp[i+1][j-1])) {
-      dp[i][j] = true;
-      if (len > maxLength) {
-        maxLength = len;
-        start = i;
-      }
-    }
-  }
-}</pre>
-          </div>
+          <p><strong>Key Insight:</strong> The DP approach avoids redundant calculations by storing results of subproblems. This makes it significantly faster than the naive approach for medium-sized inputs.</p>
           
-          <p><strong>Advantages:</strong> More structured approach, avoids redundant calculations present in the naive approach.</p>
+          <p><strong>Advantages:</strong> More efficient than naive approach, elegant solution using tabulation, good balance between simplicity and performance.</p>
           <p><strong>Disadvantages:</strong> Requires O(n²) space for the DP table, which can be memory-intensive for very large inputs.</p>
+          
+          <div class="highlight-info">
+            <i class="fas fa-lightbulb"></i> <strong>Implementation Note:</strong> Our implementation automatically falls back to a more memory-efficient algorithm for inputs over 10,000 characters to prevent memory exhaustion. This ensures reliable performance even with exceptionally large texts.
+          </div>
         </div>
         
         <!-- Manacher's Algorithm -->
         <div class="algorithm-card manacher">
           <h3>Manacher's Algorithm <span class="complexity-badge">O(n)</span></h3>
-          <p>This specialized algorithm achieves linear time complexity by reusing previously computed results and leveraging symmetry properties of palindromes.</p>
+          <p>This specialized algorithm achieves linear time complexity by cleverly reusing previously computed information. It's the most efficient of the three algorithms, especially for large inputs.</p>
           
           <h4>How It Works:</h4>
           <ul class="algorithm-steps">
+            <li>Remove spaces and convert to lowercase for consistent comparison</li>
             <li>Transform the input string by inserting special characters (e.g., '#') between each character to handle both odd and even length palindromes uniformly</li>
-            <li>Initialize an array P where P[i] represents the radius of the palindrome centered at position i</li>
-            <li>Maintain a center position C and its right boundary R of the rightmost palindrome encountered so far</li>
-            <li>For each position i:
+            <li>Initialize an array P where P[i] represents the radius (half-length) of the palindrome centered at position i</li>
+            <li>Maintain two key variables:
               <ul>
-                <li>If i < R, use the mirror property to initialize P[i] with a minimum guaranteed value</li>
-                <li>Expand around i to find the actual palindrome radius</li>
-                <li>Update C and R if the palindrome at i extends beyond R</li>
+                <li>C: Center of the rightmost palindrome encountered so far</li>
+                <li>R: Right boundary position of that palindrome</li>
               </ul>
             </li>
-            <li>Extract the longest palindrome from the P array</li>
+            <li>For each position i:
+              <ul>
+                <li>Use symmetry to initialize P[i] if i is within the current right boundary R</li>
+                <li>Expand around i as far as possible to find the actual palindrome radius</li>
+                <li>Update C and R if the palindrome at i extends beyond the current right boundary</li>
+              </ul>
+            </li>
+            <li>Find the maximum value in P and its corresponding center to identify the longest palindrome</li>
+            <li>Map indices back to the original string (with spaces) for the final result</li>
           </ul>
           
-          <div class="code-block">
-            <pre>// Transform string to handle both odd and even length palindromes
-let T = '#';
-for (let i = 0; i < s.length; i++) {
-  T += s[i] + '#';
-}
-
-const n = T.length;
-const P = Array(n).fill(0);
-let C = 0, R = 0;
-
-for (let i = 0; i < n; i++) {
-  if (i < R) {
-    P[i] = Math.min(R - i, P[2 * C - i]);
-  }
-  
-  // Expand around center i
-  while (i + P[i] + 1 < n && i - P[i] - 1 >= 0 && 
-         T[i + P[i] + 1] === T[i - P[i] - 1]) {
-    P[i]++;
-  }
-  
-  // Update C and R if the palindrome at i extends beyond R
-  if (i + P[i] > R) {
-    C = i;
-    R = i + P[i];
-  }
-}</pre>
-          </div>
+          <p><strong>Key Insight:</strong> The linear time complexity is achieved by using the symmetry property of palindromes. When a new position i is within a known palindromic region, we can initialize P[i] based on its mirror position, avoiding redundant character comparisons.</p>
           
-          <p><strong>Advantages:</strong> Linear time complexity (O(n)), making it the most efficient for large inputs.</p>
-          <p><strong>Disadvantages:</strong> More complex implementation and harder to understand intuitively.</p>
+          <p><strong>Advantages:</strong> Linear time complexity makes it significantly faster for large inputs, optimal asymptotic efficiency.</p>
+          <p><strong>Disadvantages:</strong> More complex implementation and harder to understand intuitively, slightly higher constant factors may make it less efficient for very small inputs.</p>
+          
+          <div class="highlight-info">
+            <i class="fas fa-lightbulb"></i> <strong>Implementation Note:</strong> Our implementation handles spaces and case sensitivity consistently across all algorithms. The transformation with special characters enables uniform treatment of both odd and even length palindromes, which is a key insight of Manacher's algorithm.
+          </div>
+        </div>
+        
+        <div class="highlight-info" style="margin-top: 40px; background-color: rgba(255, 230, 109, 0.2); border-left-color: var(--warning-color);">
+          <i class="fas fa-exclamation-circle"></i> <strong>Important Implementation Detail:</strong> All three algorithm implementations use the exact same approach for handling spaces and case sensitivity. They:
+          <ol>
+            <li>Convert the original string to lowercase and remove spaces for comparisons</li>
+            <li>Maintain a mapping between processed string positions and original string positions</li>
+            <li>Return the substring from the original text (with spaces preserved) as the final result</li>
+          </ol>
+          This ensures that all algorithms produce consistent results and can be fairly compared against each other.
         </div>
       </div>
       
@@ -787,6 +754,74 @@ const memoryUsage = memoryAfter - memoryBefore;</pre>
           <li><strong>Error Handling:</strong> Graceful handling of edge cases and errors with user-friendly messages</li>
           <li><strong>Responsive Design:</strong> The UI adapts to different screen sizes for optimal user experience</li>
         </ul>
+      </div>
+      
+      <div class="section">
+        <h2>About Performance Measurements</h2>
+        <p>The LPS Analyzer provides detailed performance metrics for each algorithm, giving you insights into their efficiency differences.</p>
+        
+        <div class="algorithm-card dp">
+          <h3>How We Measure Performance</h3>
+          
+          <h4>Execution Time:</h4>
+          <p>We use the Node.js <code>performance.now()</code> API to measure the time taken by each algorithm. This provides high-resolution timing in milliseconds:</p>
+          
+          <div class="code-block">
+            <pre>// Time measurement implementation
+const startTime = performance.now();
+const result = algorithm(inputString);
+const endTime = performance.now();
+const executionTime = endTime - startTime;</pre>
+          </div>
+          
+          <p>Time measurements are highly reliable and consistent, accurately reflecting the computational efficiency of each algorithm.</p>
+          
+          <h4>Memory Usage:</h4>
+          <p>Memory usage is measured by comparing heap usage before and after algorithm execution:</p>
+          
+          <div class="code-block">
+            <pre>// Memory measurement implementation
+const memBefore = process.memoryUsage().heapUsed;
+const result = algorithm(inputString);
+const memAfter = process.memoryUsage().heapUsed;
+const memoryUsage = (memAfter - memBefore) / 1024; // Convert to KB</pre>
+          </div>
+          
+          <h4>The Challenge with Memory Measurements</h4>
+          <p>Memory measurements in Node.js can sometimes be affected by the JavaScript garbage collector, which runs automatically at unpredictable times. This can lead to several interesting phenomena:</p>
+          
+          <ul>
+            <li><strong>Negative Memory Values:</strong> If the garbage collector runs during algorithm execution, it might free memory that was allocated before measurement started, resulting in a negative memory usage value.</li>
+            <li><strong>Inconsistent Measurements:</strong> Running the same algorithm on identical input might show different memory usage each time due to garbage collection timing.</li>
+            <li><strong>Occasionally Large Values:</strong> If garbage collection is delayed, memory measurements might appear larger than the actual memory needed by the algorithm.</li>
+          </ul>
+          
+          <div class="highlight-info">
+            <i class="fas fa-exclamation-triangle" style="color: var(--warning-color);"></i>
+            <strong>How We Handle Measurement Issues:</strong> When memory measurement anomalies are detected, the LPS Analyzer:
+            <ol>
+              <li>Flags the affected measurements with an asterisk (*)</li>
+              <li>Shows a tooltip explaining the issue when you hover over the value</li>
+              <li>Displays a warning message at the bottom of the results</li>
+            </ol>
+            This approach maintains transparency while ensuring you're not misled by inaccurate measurements. It's important to note that <strong>these issues do not affect the accuracy of palindrome detection or time measurements</strong>.
+          </div>
+        </div>
+        
+        <div class="algorithm-card manacher" style="margin-top: 30px;">
+          <h3>Interpreting Performance Results</h3>
+          
+          <p>When comparing algorithms, consider the following:</p>
+          
+          <ul>
+            <li><strong>For Small Inputs (< 1000 characters):</strong> All three algorithms perform similarly, with the naive approach sometimes faster due to lower overhead.</li>
+            <li><strong>For Medium Inputs (1000-10,000 characters):</strong> The dynamic programming and Manacher's approaches typically outperform the naive approach significantly.</li>
+            <li><strong>For Large Inputs (> 10,000 characters):</strong> Manacher's algorithm typically shows the best performance, especially as input size grows.</li>
+            <li><strong>Memory Usage:</strong> When reliable (not affected by garbage collection), memory measurements typically show the naive approach using less memory than DP, with Manacher's somewhere in between.</li>
+          </ul>
+          
+          <p>For the most accurate performance analysis, we recommend focusing primarily on the execution time measurements, as they're consistent and reliable across all runs.</p>
+        </div>
       </div>
     </div>
   </div>

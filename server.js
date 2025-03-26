@@ -8,6 +8,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DEBUG = process.env.DEBUG === 'true' || false; // Debug flag
 
+// Detect if running on Vercel
+const isVercel = process.env.VERCEL || false;
+console.log(`Running in ${isVercel ? 'Vercel' : 'local'} environment`);
+
 // Configure multer for file uploads
 const upload = multer({
   limits: {
@@ -15,17 +19,21 @@ const upload = multer({
   },
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      // Create uploads directory with absolute path
-      const uploadDir = path.join(__dirname, 'uploads');
+      // Use /tmp for Vercel or create local directory
+      const uploadDir = isVercel 
+        ? '/tmp' 
+        : path.join(__dirname, 'uploads');
       
-      // Create uploads directory if it doesn't exist
-      try {
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-          console.log(`Created upload directory: ${uploadDir}`);
+      // Create uploads directory if it doesn't exist and not on Vercel
+      if (!isVercel) {
+        try {
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+            console.log(`Created upload directory: ${uploadDir}`);
+          }
+        } catch (err) {
+          console.error('Error creating upload directory:', err);
         }
-      } catch (err) {
-        console.error('Error creating upload directory:', err);
       }
       
       cb(null, uploadDir);
@@ -57,7 +65,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Properly handle paths for both local and Vercel environments
-// Simplify this to just use the standard path
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Error handling middleware for payload too large errors
@@ -79,8 +86,22 @@ function log(message) {
 
 /**
  * Finds the longest palindromic substring using a naive approach (expand around center)
- * Time Complexity: O(n³)
+ * Time Complexity: O(n²) for the optimized version, O(n³) for the traditional version
  * Space Complexity: O(1)
+ * 
+ * How it works:
+ * 1. For each possible center position in the string (both characters and spaces between):
+ * 2. Try to expand around that center as far as possible while maintaining palindrome property
+ * 3. Track the longest palindrome found during this process
+ * 4. Handle both odd-length palindromes (centered at a character) and even-length palindromes
+ *    (centered between two characters)
+ * 
+ * Optimizations:
+ * - For large inputs (>5000 chars), uses a more efficient implementation that avoids
+ *   redundant operations but keeps the same algorithmic approach
+ * - Special handling to ignore spaces when checking for palindromes
+ * - Case-insensitive comparison
+ * 
  * Note: Spaces are ignored in palindrome detection. Case is now ignored too.
  * @param {string} s - Input string
  * @returns {string} - Longest palindromic substring
@@ -190,6 +211,23 @@ function naiveLPS(s) {
  * Finds the longest palindromic substring using dynamic programming
  * Time Complexity: O(n²)
  * Space Complexity: O(n²)
+ * 
+ * How it works:
+ * 1. Create a 2D boolean table where table[i][j] represents whether substring from i to j is palindrome
+ * 2. Fill this table in a bottom-up manner:
+ *    - All substrings of length 1 are palindromes (table[i][i] = true)
+ *    - For substrings of length 2, they're palindromes if both characters match
+ *    - For substrings of length 3+, they're palindromes if outer characters match AND
+ *      the inner substring is also a palindrome (table[i+1][j-1] is true)
+ * 3. During this process, track the longest palindrome found
+ * 
+ * Optimizations:
+ * - For very large inputs (>10000 chars), switches to an optimized implementation
+ *   that avoids creating the full DP table to prevent memory issues
+ * - Handles spaces by using a processed string for comparisons but maintaining
+ *   the original string for returning results
+ * - Case-insensitive comparison
+ * 
  * Note: Spaces and case are ignored in palindrome detection.
  * @param {string} s - Input string
  * @returns {string} - Longest palindromic substring
@@ -272,6 +310,13 @@ function dpLPS(s) {
 /**
  * An optimized approach for very large inputs that would cause memory issues with full DP
  * This implementation uses a sliding window and only checks potential palindromes
+ * 
+ * How it works:
+ * 1. Instead of building the full DP table, it uses the expand-around-center technique
+ * 2. But uses the knowledge gained from DP to make it more efficient
+ * 3. Creates a mapping between processed string (no spaces, lowercase) and original string
+ * 4. Expands around each potential center point (similar to naive approach but optimized)
+ * 
  * @param {string} originalStr - Original input with spaces
  * @param {string} processedStr - Processed string without spaces and in lowercase
  * @returns {string} - Longest palindromic substring
@@ -330,6 +375,23 @@ function optimizedDPForLargeInput(originalStr, processedStr) {
  * Finds the longest palindromic substring using Manacher's algorithm
  * Time Complexity: O(n)
  * Space Complexity: O(n)
+ * 
+ * How it works:
+ * 1. Transform the string by inserting special characters (e.g., '#') between each character
+ *    This allows us to handle both odd and even length palindromes uniformly
+ * 2. For each position i:
+ *    - If we know a palindrome centered at an earlier position extends beyond i,
+ *      use this information to initialize the palindrome length at i
+ *    - Expand outward from i to find the actual palindrome centered at i
+ *    - Update the rightmost boundary of any palindrome seen so far
+ * 3. The key insight is utilizing symmetry properties of palindromes to reuse
+ *    previous computations, thus achieving linear time complexity
+ * 
+ * Optimizations:
+ * - Linear time complexity (compared to quadratic for other approaches)
+ * - Handles cases with spaces correctly by using a processed version for comparison
+ * - Case-insensitive comparison
+ * 
  * Note: Spaces and case are ignored in palindrome detection.
  * @param {string} s - Input string
  * @returns {string} - Longest palindromic substring
