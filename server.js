@@ -49,7 +49,10 @@ const upload = multer({
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.static('public'));
+
+// Properly handle paths for both local and Vercel environments
+const staticPath = process.env.VERCEL ? path.join(__dirname, 'public') : 'public';
+app.use(express.static(staticPath));
 
 // Error handling middleware for payload too large errors
 app.use((err, req, res, next) => {
@@ -59,6 +62,14 @@ app.use((err, req, res, next) => {
     });
   }
   next(err);
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Global error:", err);
+  res.status(500).json({ 
+    error: err.message || 'An unexpected error occurred'
+  });
 });
 
 // Logging utility - only logs in debug mode
@@ -390,6 +401,11 @@ app.post('/runAlgorithms', (req, res) => {
   }
   
   try {
+    // Validate input to prevent errors
+    if (typeof inputString !== 'string') {
+      return res.status(400).json({ error: 'Input must be a string' });
+    }
+    
     // Only log in debug mode
     log("Input string length:", inputString.length);
     
@@ -422,8 +438,9 @@ app.post('/runAlgorithms', (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: error.message });
+    console.error("Algorithm error:", error);
+    // Ensure we always return JSON
+    res.status(500).json({ error: error.message || 'Error processing the input' });
   }
 });
 
@@ -440,40 +457,49 @@ app.post('/upload', upload.single('file'), (req, res) => {
         return res.status(500).json({ error: 'Error reading uploaded file' });
       }
       
-      // Delete the file after reading
-      fs.unlink(req.file.path, () => {
-        // Process the text with algorithms
-        const naiveResult = measurePerformance(naiveLPS, data);
-        const dpResult = measurePerformance(dpLPS, data);
-        const manacherResult = measurePerformance(manacherLPS, data);
-        
-        // Log file details only in debug mode
-        log(`Processed file: ${req.file.originalname} (${data.length} characters)`);
-        
-        // Return the results
-        res.json({
-          input: data.substring(0, 100) + (data.length > 100 ? '...' : ''), // Send truncated input for UI
-          fullLength: data.length,
-          results: {
-            naive: {
-              lps: naiveResult.result,
-              ...naiveResult.performance
-            },
-            dp: {
-              lps: dpResult.result,
-              ...dpResult.performance
-            },
-            manacher: {
-              lps: manacherResult.result,
-              ...manacherResult.performance
-            }
+      try {
+        // Delete the file after reading
+        fs.unlink(req.file.path, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error('Warning: Failed to delete temp file:', unlinkErr);
           }
+          
+          // Process the text with algorithms
+          const naiveResult = measurePerformance(naiveLPS, data);
+          const dpResult = measurePerformance(dpLPS, data);
+          const manacherResult = measurePerformance(manacherLPS, data);
+          
+          // Log file details only in debug mode
+          log(`Processed file: ${req.file.originalname} (${data.length} characters)`);
+          
+          // Return the results
+          res.json({
+            input: data.substring(0, 100) + (data.length > 100 ? '...' : ''), // Send truncated input for UI
+            fullLength: data.length,
+            results: {
+              naive: {
+                lps: naiveResult.result,
+                ...naiveResult.performance
+              },
+              dp: {
+                lps: dpResult.result,
+                ...dpResult.performance
+              },
+              manacher: {
+                lps: manacherResult.result,
+                ...manacherResult.performance
+              }
+            }
+          });
         });
-      });
+      } catch (processingError) {
+        console.error("File processing error:", processingError);
+        return res.status(500).json({ error: processingError.message || 'Error processing file content' });
+      }
     });
   } catch (error) {
     console.error("File upload error:", error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message || 'Error handling file upload' });
   }
 });
 
