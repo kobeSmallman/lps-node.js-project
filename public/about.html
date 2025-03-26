@@ -452,6 +452,192 @@
           
           <p><strong>Key Insight:</strong> The optimized implementation maintains a conceptual O(n³) approach but with better implementation achieving O(n²) in practice. It uses index mapping to handle spaces correctly.</p>
           
+          <h4>Actual Code Implementation:</h4>
+          <div class="code-block">
+            <pre>function naiveLPS(s) {
+  if (!s || typeof s !== 'string') {
+    return '';
+  }
+  
+  // Remove spaces and convert to lowercase for palindrome checking
+  const originalStr = s;
+  const processedStr = s.replace(/\s/g, '').toLowerCase();
+  if (processedStr.length === 0) {
+    return '';
+  }
+  
+  // For very large inputs, use a more efficient implementation
+  // This is still conceptually the naive approach but with better implementation
+  if (processedStr.length > 5000) {
+    console.log('Using optimized version of naive algorithm for large input');
+    
+    // Create mapping from processed string indices to original string indices
+    const indexMapping = [];
+    let processedIdx = 0;
+    
+    for (let i = 0; i < originalStr.length; i++) {
+      if (originalStr[i].toLowerCase() !== ' ') {
+        indexMapping[processedIdx] = i;
+        processedIdx++;
+      }
+    }
+    
+    let maxLength = 1;
+    let maxStart = 0;
+    
+    // Improved version of naive expansion around centers
+    for (let i = 0; i < processedStr.length; i++) {
+      // For odd length palindromes
+      let left = i, right = i;
+      while (left >= 0 && right < processedStr.length && 
+             processedStr[left] === processedStr[right]) {
+        const currentLength = right - left + 1;
+        if (currentLength > maxLength) {
+          maxLength = currentLength;
+          maxStart = left;
+        }
+        left--;
+        right++;
+      }
+      
+      // For even length palindromes
+      left = i;
+      right = i + 1;
+      while (left >= 0 && right < processedStr.length && 
+             processedStr[left] === processedStr[right]) {
+        const currentLength = right - left + 1;
+        if (currentLength > maxLength) {
+          maxLength = currentLength;
+          maxStart = left;
+        }
+        left--;
+        right++;
+      }
+    }
+    
+    // Map back to original string with spaces
+    const origStart = indexMapping[maxStart];
+    const origEnd = indexMapping[maxStart + maxLength - 1];
+    
+    return originalStr.substring(origStart, origEnd + 1);
+  }
+  
+  // Standard implementation for smaller inputs
+  let maxLength = 1;
+  let start = 0;
+  let end = 0;
+  
+  for (let i = 0; i < s.length; i++) {
+    for (let j = i; j < s.length; j++) {
+      let isPalindrome = true;
+      
+      // Get the substring without spaces for palindrome checking
+      const subStr = s.substring(i, j + 1);
+      const processedSubStr = subStr.replace(/\s/g, '').toLowerCase();
+      
+      // Check if it's a palindrome
+      for (let k = 0; k < Math.floor(processedSubStr.length / 2); k++) {
+        if (processedSubStr[k] !== processedSubStr[processedSubStr.length - k - 1]) {
+          isPalindrome = false;
+          break;
+        }
+      }
+      
+      // Update if a longer palindrome is found
+      if (isPalindrome && processedSubStr.length > maxLength) {
+        maxLength = processedSubStr.length;
+        start = i;
+        end = j;
+      }
+    }
+  }
+  
+  return s.substring(start, end + 1);
+}</pre>
+          </div>
+
+          <h4>Line-by-Line Explanation:</h4>
+          <div class="highlight-info">
+            <pre>if (!s || typeof s !== 'string') {
+  return '';
+}</pre>
+            <p><strong>Input Validation:</strong> First check if the input is valid - if it's empty, null, or not a string, return an empty string. This defensive programming prevents errors with invalid inputs.</p>
+            
+            <pre>// Remove spaces and convert to lowercase for palindrome checking
+const originalStr = s;
+const processedStr = s.replace(/\s/g, '').toLowerCase();</pre>
+            <p><strong>Preprocessing:</strong> We store the original string intact (spaces and all) for the final return value. Then create a processed version with all spaces removed and converted to lowercase for easier palindrome checking.</p>
+            
+            <pre>if (processedStr.length === 0) {
+  return '';
+}</pre>
+            <p><strong>Edge Case:</strong> If after removing spaces the string is empty, return an empty string (e.g., input was just spaces).</p>
+            
+            <pre>// For very large inputs, use a more efficient implementation
+if (processedStr.length > 5000) {
+  // Optimized code path...
+}</pre>
+            <p><strong>Optimization Decision:</strong> For large inputs (>5000 chars), we switch to a more efficient implementation. This is a key part of making the algorithm practical for real-world use while maintaining the same conceptual approach.</p>
+            
+            <pre>// Create mapping from processed string indices to original string indices
+const indexMapping = [];
+let processedIdx = 0;
+
+for (let i = 0; i < originalStr.length; i++) {
+  if (originalStr[i].toLowerCase() !== ' ') {
+    indexMapping[processedIdx] = i;
+    processedIdx++;
+  }
+}</pre>
+            <p><strong>Index Mapping:</strong> This creates a mapping between positions in the processed string (no spaces) and the original string (with spaces). This allows us to find the correct substring in the original text after finding palindromes in the processed text.</p>
+            
+            <pre>let maxLength = 1;
+let maxStart = 0;</pre>
+            <p><strong>Result Tracking:</strong> Initialize variables to track the maximum palindrome length found and its starting position.</p>
+            
+            <pre>// Improved version of naive expansion around centers
+for (let i = 0; i < processedStr.length; i++) {
+  // For odd length palindromes
+  let left = i, right = i;
+  while (left >= 0 && right < processedStr.length && 
+         processedStr[left] === processedStr[right]) {
+    const currentLength = right - left + 1;
+    if (currentLength > maxLength) {
+      maxLength = currentLength;
+      maxStart = left;
+    }
+    left--;
+    right++;
+  }</pre>
+            <p><strong>Odd-Length Palindrome Check:</strong> For each position in the string, treat it as a potential center of an odd-length palindrome (like "racecar"). We expand outward (left and right) as long as the characters match and we're within bounds. If we find a longer palindrome, we update our tracking variables.</p>
+            
+            <pre>  // For even length palindromes
+  left = i;
+  right = i + 1;
+  while (left >= 0 && right < processedStr.length && 
+         processedStr[left] === processedStr[right]) {
+    const currentLength = right - left + 1;
+    if (currentLength > maxLength) {
+      maxLength = currentLength;
+      maxStart = left;
+    }
+    left--;
+    right++;
+  }</pre>
+            <p><strong>Even-Length Palindrome Check:</strong> Similarly, we check for even-length palindromes (like "abba") by starting with adjacent character positions. Same expansion logic applies.</p>
+            
+            <pre>// Map back to original string with spaces
+const origStart = indexMapping[maxStart];
+const origEnd = indexMapping[maxStart + maxLength - 1];
+
+return originalStr.substring(origStart, origEnd + 1);</pre>
+            <p><strong>Result Mapping:</strong> Once we've found the longest palindrome in the processed string, we use our index mapping to find the corresponding positions in the original string, preserving spaces and returning the exact substring from the original input.</p>
+            
+            <pre>// Standard implementation for smaller inputs
+// [Code that runs for strings less than 5000 characters]</pre>
+            <p><strong>Traditional Approach:</strong> For smaller inputs, we use the standard O(n³) approach that checks every possible substring. This is simpler but less efficient. It validates each substring by checking if it's a palindrome, maintaining the same core logic of removing spaces and case insensitivity.</p>
+          </div>
+          
           <p><strong>Advantages:</strong> Simple to understand, works well for small inputs, suitable for educational purposes.</p>
           <p><strong>Disadvantages:</strong> Less efficient for large inputs compared to more sophisticated algorithms.</p>
           
@@ -478,6 +664,223 @@
           </ul>
           
           <p><strong>Key Insight:</strong> The DP approach avoids redundant calculations by storing results of subproblems. This makes it significantly faster than the naive approach for medium-sized inputs.</p>
+          
+          <h4>Actual Code Implementation:</h4>
+          <div class="code-block">
+            <pre>function dpLPS(s) {
+  if (!s || typeof s !== 'string') {
+    return '';
+  }
+  
+  // Process string by removing spaces and converting to lowercase
+  const originalStr = s;
+  const processedStr = s.replace(/\s/g, '').toLowerCase();
+  
+  if (processedStr.length === 0) {
+    return '';
+  }
+  
+  // Use a more efficient approach for very large strings to avoid memory issues
+  // This prevents hanging with large inputs
+  if (processedStr.length > 10000) {
+    console.log('Using optimized approach for very large input in DP algorithm');
+    return optimizedDPForLargeInput(originalStr, processedStr);
+  }
+  
+  // Create mapping from processed string indices to original string indices
+  const indexMapping = [];
+  let processedIdx = 0;
+  
+  for (let i = 0; i < originalStr.length; i++) {
+    if (originalStr[i].toLowerCase() !== ' ') {
+      indexMapping[processedIdx] = i;
+      processedIdx++;
+    }
+  }
+  
+  // Initialize table
+  const n = processedStr.length;
+  const table = Array(n).fill().map(() => Array(n).fill(false));
+  
+  // All substrings of length 1 are palindromes
+  let maxLength = 1;
+  let start = 0;
+  
+  for (let i = 0; i < n; i++) {
+    table[i][i] = true;
+  }
+  
+  // Check for substrings of length 2
+  for (let i = 0; i < n - 1; i++) {
+    if (processedStr[i] === processedStr[i + 1]) {
+      table[i][i + 1] = true;
+      start = i;
+      maxLength = 2;
+    }
+  }
+  
+  // Check for lengths greater than 2
+  for (let k = 3; k <= n; k++) {
+    for (let i = 0; i < n - k + 1; i++) {
+      const j = i + k - 1;
+      
+      if (table[i + 1][j - 1] && processedStr[i] === processedStr[j]) {
+        table[i][j] = true;
+        
+        if (k > maxLength) {
+          start = i;
+          maxLength = k;
+        }
+      }
+    }
+  }
+  
+  // Map back to original string with spaces
+  const origStart = indexMapping[start];
+  const origEnd = indexMapping[start + maxLength - 1];
+  
+  return originalStr.substring(origStart, origEnd + 1);
+}
+
+function optimizedDPForLargeInput(originalStr, processedStr) {
+  // Create mapping from processed string indices to original string indices
+  const indexMapping = [];
+  let processedIdx = 0;
+  
+  for (let i = 0; i < originalStr.length; i++) {
+    if (originalStr[i].toLowerCase() !== ' ') {
+      indexMapping[processedIdx] = i;
+      processedIdx++;
+    }
+  }
+  
+  let maxLength = 0;
+  let maxStart = 0;
+  
+  // Check all possible centers
+  for (let i = 0; i < processedStr.length; i++) {
+    // For odd length palindromes
+    let left = i, right = i;
+    while (left >= 0 && right < processedStr.length && processedStr[left] === processedStr[right]) {
+      const currentLength = right - left + 1;
+      if (currentLength > maxLength) {
+        maxLength = currentLength;
+        maxStart = left;
+      }
+      left--;
+      right++;
+    }
+    
+    // For even length palindromes
+    left = i;
+    right = i + 1;
+    while (left >= 0 && right < processedStr.length && processedStr[left] === processedStr[right]) {
+      const currentLength = right - left + 1;
+      if (currentLength > maxLength) {
+        maxLength = currentLength;
+        maxStart = left;
+      }
+      left--;
+      right++;
+    }
+  }
+  
+  // Map back to original string with spaces
+  const origStart = indexMapping[maxStart];
+  const origEnd = indexMapping[maxStart + maxLength - 1];
+  
+  return originalStr.substring(origStart, origEnd + 1);
+}</pre>
+          </div>
+
+          <h4>Line-by-Line Explanation:</h4>
+          <div class="highlight-info">
+            <pre>if (!s || typeof s !== 'string') {
+  return '';
+}</pre>
+            <p><strong>Input Validation:</strong> As with the naive approach, we first validate our input and handle edge cases.</p>
+            
+            <pre>// Process string by removing spaces and converting to lowercase
+const originalStr = s;
+const processedStr = s.replace(/\s/g, '').toLowerCase();</pre>
+            <p><strong>Preprocessing:</strong> Store the original string and create a processed version with spaces removed and lowercase for consistent comparison.</p>
+            
+            <pre>if (processedStr.length > 10000) {
+  console.log('Using optimized approach for very large input in DP algorithm');
+  return optimizedDPForLargeInput(originalStr, processedStr);
+}</pre>
+            <p><strong>Memory Optimization:</strong> For very large inputs (>10,000 characters), we use a different approach (defined in the separate function below) to avoid potential memory issues. The standard DP approach uses an n×n table which becomes problematic for large n.</p>
+            
+            <pre>// Create mapping from processed string indices to original string indices
+const indexMapping = [];
+let processedIdx = 0;
+
+for (let i = 0; i < originalStr.length; i++) {
+  if (originalStr[i].toLowerCase() !== ' ') {
+    indexMapping[processedIdx] = i;
+    processedIdx++;
+  }
+}</pre>
+            <p><strong>Index Mapping:</strong> Create a mapping between positions in the processed string and the original string, essential for preserving spaces in our results.</p>
+            
+            <pre>// Initialize table
+const n = processedStr.length;
+const table = Array(n).fill().map(() => Array(n).fill(false));</pre>
+            <p><strong>DP Table Initialization:</strong> Create an n×n table where table[i][j] will be true if the substring from index i to j is a palindrome. Initially, all values are false.</p>
+            
+            <pre>// All substrings of length 1 are palindromes
+let maxLength = 1;
+let start = 0;
+
+for (let i = 0; i < n; i++) {
+  table[i][i] = true;
+}</pre>
+            <p><strong>Base Case:</strong> All single characters are palindromes, so we set the diagonal elements of our table to true. We also initialize our tracking variables assuming at least one character (thus a palindrome of length 1).</p>
+            
+            <pre>// Check for substrings of length 2
+for (let i = 0; i < n - 1; i++) {
+  if (processedStr[i] === processedStr[i + 1]) {
+    table[i][i + 1] = true;
+    start = i;
+    maxLength = 2;
+  }
+}</pre>
+            <p><strong>Two-Character Palindromes:</strong> Check adjacent characters - if they match, they form a palindrome of length 2. Update the table and tracking variables if found.</p>
+            
+            <pre>// Check for lengths greater than 2
+for (let k = 3; k <= n; k++) {
+  for (let i = 0; i < n - k + 1; i++) {
+    const j = i + k - 1;
+    
+    if (table[i + 1][j - 1] && processedStr[i] === processedStr[j]) {
+      table[i][j] = true;
+      
+      if (k > maxLength) {
+        start = i;
+        maxLength = k;
+      }
+    }
+  }
+}</pre>
+            <p><strong>Building the DP Table:</strong> For substrings of length 3 and greater, we use previously computed results. A substring is a palindrome if:</p>
+            <ol>
+              <li>Its outer characters match (<code>processedStr[i] === processedStr[j]</code>), AND</li>
+              <li>The substring inside those characters is also a palindrome (<code>table[i + 1][j - 1]</code>)</li>
+            </ol>
+            <p>This recursive structure is the heart of the dynamic programming approach, avoiding redundant calculations.</p>
+            
+            <pre>// Map back to original string with spaces
+const origStart = indexMapping[start];
+const origEnd = indexMapping[start + maxLength - 1];
+
+return originalStr.substring(origStart, origEnd + 1);</pre>
+            <p><strong>Result Mapping:</strong> Once we've found the longest palindrome in the processed string, we use our index mapping to find the corresponding positions in the original string, preserving spaces.</p>
+            
+            <pre>function optimizedDPForLargeInput(originalStr, processedStr) {
+  // ...implementation similar to the expansion technique in the naive approach
+}</pre>
+            <p><strong>Optimized Approach for Large Inputs:</strong> This helper function uses the expand-around-center technique (similar to the optimized naive approach) but is conceptually related to dynamic programming. It avoids the memory overhead of the full DP table while maintaining efficiency.</p>
+          </div>
           
           <p><strong>Advantages:</strong> More efficient than naive approach, elegant solution using tabulation, good balance between simplicity and performance.</p>
           <p><strong>Disadvantages:</strong> Requires O(n²) space for the DP table, which can be memory-intensive for very large inputs.</p>
@@ -516,11 +919,162 @@
           
           <p><strong>Key Insight:</strong> The linear time complexity is achieved by using the symmetry property of palindromes. When a new position i is within a known palindromic region, we can initialize P[i] based on its mirror position, avoiding redundant character comparisons.</p>
           
+          <h4>Actual Code Implementation:</h4>
+          <div class="code-block">
+            <pre>function manacherLPS(s) {
+  if (!s || typeof s !== 'string') {
+    return '';
+  }
+  
+  // Store original string and create processed string without spaces, in lowercase
+  const originalStr = s;
+  const processedStr = s.replace(/\s/g, '').toLowerCase();
+  
+  if (processedStr.length === 0) {
+    return '';
+  }
+  
+  // Create mapping from processed string indices to original string indices
+  const indexMapping = [];
+  let processedIdx = 0;
+  
+  for (let i = 0; i < originalStr.length; i++) {
+    if (originalStr[i].toLowerCase() !== ' ') {
+      indexMapping[processedIdx] = i;
+      processedIdx++;
+    }
+  }
+  
+  // Prepare string for Manacher's algorithm
+  const T = '#' + processedStr.split('').join('#') + '#';
+  const n = T.length;
+  const P = Array(n).fill(0);
+  
+  let C = 0, R = 0;
+  for (let i = 1; i < n - 1; i++) {
+    if (R > i) {
+      P[i] = Math.min(R - i, P[2 * C - i]);
+    }
+    
+    // Expand around center i
+    while (i + P[i] + 1 < n && i - P[i] - 1 >= 0 && T[i + P[i] + 1] === T[i - P[i] - 1]) {
+      P[i]++;
+    }
+    
+    // Update center and right boundary
+    if (i + P[i] > R) {
+      C = i;
+      R = i + P[i];
+    }
+  }
+  
+  // Find the maximum palindrome length
+  let maxLen = 0;
+  let centerIndex = 0;
+  
+  for (let i = 1; i < n - 1; i++) {
+    if (P[i] > maxLen) {
+      maxLen = P[i];
+      centerIndex = i;
+    }
+  }
+  
+  // Convert to indices in the processed string
+  const start = Math.floor((centerIndex - maxLen) / 2);
+  
+  // Map back to original string with spaces
+  const origStart = indexMapping[start];
+  const origEnd = indexMapping[start + maxLen - 1];
+  
+  return originalStr.substring(origStart, origEnd + 1);
+}</pre>
+          </div>
+
+          <h4>Line-by-Line Explanation:</h4>
+          <div class="highlight-info">
+            <pre>if (!s || typeof s !== 'string') {
+  return '';
+}
+
+// Store original string and create processed string without spaces, in lowercase
+const originalStr = s;
+const processedStr = s.replace(/\s/g, '').toLowerCase();</pre>
+            <p><strong>Initial Setup:</strong> Like the other algorithms, we validate input and create a processed string with spaces removed and all characters in lowercase for consistent comparison.</p>
+            
+            <pre>// Create mapping from processed string indices to original string indices
+const indexMapping = [];
+let processedIdx = 0;
+
+for (let i = 0; i < originalStr.length; i++) {
+  if (originalStr[i].toLowerCase() !== ' ') {
+    indexMapping[processedIdx] = i;
+    processedIdx++;
+  }
+}</pre>
+            <p><strong>Index Mapping:</strong> Create the mapping between processed string positions and original string positions, just as in the other algorithms.</p>
+            
+            <pre>// Prepare string for Manacher's algorithm
+const T = '#' + processedStr.split('').join('#') + '#';
+const n = T.length;
+const P = Array(n).fill(0);</pre>
+            <p><strong>String Transformation:</strong> This is a key step in Manacher's algorithm. We transform the string by inserting special characters (here '#') between each character and at the beginning and end. This allows us to handle both odd and even length palindromes uniformly. For example, "abba" becomes "#a#b#b#a#". We also initialize an array P where P[i] will store the radius (half-length) of the palindrome centered at position i.</p>
+            
+            <pre>let C = 0, R = 0;</pre>
+            <p><strong>Center and Radius Tracking:</strong> Initialize variables to track:</p>
+            <ul>
+              <li><strong>C:</strong> The center of the rightmost palindrome found so far</li>
+              <li><strong>R:</strong> The right boundary of that palindrome (C + P[C])</li>
+            </ul>
+            
+            <pre>for (let i = 1; i < n - 1; i++) {
+  if (R > i) {
+    P[i] = Math.min(R - i, P[2 * C - i]);
+  }</pre>
+            <p><strong>Palindrome Symmetry Property:</strong> This is the key insight of Manacher's algorithm. If position i is within the right boundary of our current rightmost palindrome (R > i), we can use the symmetry property to initialize P[i] based on its mirror position (2*C - i) relative to the center C. However, we need to be careful not to exceed the right boundary, hence the minimum operation.</p>
+            
+            <pre>  // Expand around center i
+  while (i + P[i] + 1 < n && i - P[i] - 1 >= 0 && T[i + P[i] + 1] === T[i - P[i] - 1]) {
+    P[i]++;
+  }</pre>
+            <p><strong>Expansion Phase:</strong> We still need to expand around center i, but thanks to our initialization using symmetry, we can often skip many comparisons. This is what makes the algorithm efficient. We expand outward as long as we're within bounds and characters match.</p>
+            
+            <pre>  // Update center and right boundary
+  if (i + P[i] > R) {
+    C = i;
+    R = i + P[i];
+  }
+}</pre>
+            <p><strong>Update Rightmost Palindrome:</strong> If the palindrome centered at i extends beyond our current right boundary R, update C and R. This is essential for maintaining the invariant that [C, R] represents the rightmost palindrome found so far.</p>
+            
+            <pre>// Find the maximum palindrome length
+let maxLen = 0;
+let centerIndex = 0;
+
+for (let i = 1; i < n - 1; i++) {
+  if (P[i] > maxLen) {
+    maxLen = P[i];
+    centerIndex = i;
+  }
+}</pre>
+            <p><strong>Find Maximum Palindrome:</strong> After processing all positions, we find the position i with the maximum value of P[i], which corresponds to the center of the longest palindrome.</p>
+            
+            <pre>// Convert to indices in the processed string
+const start = Math.floor((centerIndex - maxLen) / 2);</pre>
+            <p><strong>Index Conversion:</strong> Due to our string transformation, we need to convert from the position in the transformed string back to the position in the processed string. The formula (centerIndex - maxLen) / 2 accounts for the '#' characters we inserted.</p>
+            
+            <pre>// Map back to original string with spaces
+const origStart = indexMapping[start];
+const origEnd = indexMapping[start + maxLen - 1];
+
+return originalStr.substring(origStart, origEnd + 1);</pre>
+            <p><strong>Result Mapping:</strong> Finally, we use our index mapping to find the corresponding positions in the original string, preserving spaces, and return the substring.</p>
+          </div>
+          
           <p><strong>Advantages:</strong> Linear time complexity makes it significantly faster for large inputs, optimal asymptotic efficiency.</p>
           <p><strong>Disadvantages:</strong> More complex implementation and harder to understand intuitively, slightly higher constant factors may make it less efficient for very small inputs.</p>
           
           <div class="highlight-info">
-            <i class="fas fa-lightbulb"></i> <strong>Implementation Note:</strong> Our implementation handles spaces and case sensitivity consistently across all algorithms. The transformation with special characters enables uniform treatment of both odd and even length palindromes, which is a key insight of Manacher's algorithm.
+            <i class="fas fa-lightbulb"></i> <strong>Implementation Note:</strong> The transformation step with special characters is what enables Manacher's algorithm to handle both odd and even length palindromes with a single unified approach. Combined with the clever use of symmetry, this algorithm achieves the theoretical minimum time complexity for the LPS problem.
           </div>
         </div>
         
