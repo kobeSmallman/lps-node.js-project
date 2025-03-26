@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Longest Palindromic Substring Analyzer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #6C63FF;         /* Vibrant purple */
+      --primary-dark: #5A52D9;          /* Darker purple */
+      --secondary-color: #FF6B6B;       /* Coral red */
+      --tertiary-color: #4ECDC4;        /* Turquoise */
+      --accent-color: #FFE66D;          /* Yellow */
+      --light-bg: #F7F9FC;              /* Light background */
+      --card-bg: #ffffff;               /* Card background */
+      --success-color: #06d6a0;         /* Success green */
+      --warning-color: #FF9F1C;         /* Orange warning */
+      --danger-color: #FF5252;          /* Red danger */
+      --text-color: #2D3748;            /* Dark text */
+      --text-light: #718096;            /* Light text */
+      --border-radius: 10px;
+      --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      --transition: all 0.3s ease;
+      --header-height: 70px;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 0;
+      background-color: var(--light-bg);
+      color: var(--text-color);
+      line-height: 1.6;
+      padding-top: var(--header-height);
+    }
+    
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--header-height);
+      background: linear-gradient(90deg, var(--primary-color), var(--tertiary-color));
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+    
+    .header .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+    }
+    
+    .header .logo i {
+      font-size: 1.8rem;
+      margin-right: 10px;
+      color: var(--accent-color);
+    }
+    
+    .nav-links {
+      display: flex;
+      list-style: none;
+    }
+    
+    .nav-links li {
+      margin-left: 1.5rem;
+    }
+    
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+      position: relative;
+      padding: 5px 0;
+    }
+    
+    .nav-links a:hover {
+      color: var(--accent-color);
+    }
+    
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: var(--accent-color);
+      transition: var(--transition);
+    }
+    
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+    
+    .nav-links .active a {
+      color: var(--accent-color);
+    }
+    
+    .nav-links .active a::after {
+      width: 100%;
+    }
+    
+    .main-content {
+      padding: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1, h2, h3 {
+      color: var(--primary-color);
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      text-align: center;
+      font-size: 2.4rem;
+      margin-bottom: 30px;
+      border-bottom: 3px solid var(--secondary-color);
+      padding-bottom: 15px;
+    }
+    
+    h2 {
+      font-size: 1.6rem;
+      margin-top: 30px;
+      color: var(--secondary-color);
+    }
+    
+    p {
+      margin-bottom: 15px;
+    }
+    
+    .container {
+      background-color: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 40px;
+      box-shadow: var(--box-shadow);
+      margin-bottom: 40px;
+      border-top: 5px solid var(--primary-color);
+    }
+    
+    .explanation {
+      background-color: rgba(108, 99, 255, 0.1);
+      border-left: 5px solid var(--primary-color);
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 8px;
+    }
+    
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+    
+    .tabs {
+      display: flex;
+      margin-bottom: 25px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .tab {
+      padding: 12px 24px;
+      cursor: pointer;
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      border-bottom: none;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      margin-right: 8px;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+    
+    .tab.active {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--tertiary-color) 100%);
+      border-bottom: 1px solid transparent;
+      margin-bottom: -1px;
+      font-weight: 600;
+      color: white;
+    }
+    
+    .tab-content {
+      display: none;
+      padding: 25px;
+      border: 1px solid #ddd;
+      border-top: none;
+      background-color: white;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    textarea {
+      width: 100%;
+      padding: 18px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      min-height: 150px;
+      font-size: 16px;
+      resize: vertical;
+      font-family: inherit;
+      transition: var(--transition);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+    }
+    
+    .file-upload {
+      border: 2px dashed var(--tertiary-color);
+      padding: 40px;
+      text-align: center;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+      cursor: pointer;
+      background-color: rgba(78, 205, 196, 0.05);
+    }
+    
+    .file-upload:hover {
+      border-color: var(--primary-color);
+      background-color: rgba(108, 99, 255, 0.05);
+    }
+    
+    .file-upload input {
+      display: none;
+    }
+    
+    .file-upload i {
+      font-size: 2.5rem;
+      color: var(--tertiary-color);
+      margin-bottom: 15px;
+    }
+    
+    .file-info {
+      margin-top: 20px;
+      font-size: 14px;
+      color: var(--text-light);
+      background-color: #f8f9fa;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    
+    .accepted-files {
+      margin-top: 15px;
+      font-size: 14px;
+      color: var(--text-light);
+    }
+    
+    .accepted-files span {
+      display: inline-block;
+      background-color: rgba(78, 205, 196, 0.2);
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin: 0 4px;
+      font-family: monospace;
+    }
+    
+    button {
+      background: linear-gradient(135deg, var(--primary-color), var(--tertiary-color));
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: var(--transition);
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto;
+      display: block;
+      box-shadow: 0 4px 6px rgba(108, 99, 255, 0.2);
+    }
+    
+    button:hover {
+      background: linear-gradient(135deg, var(--primary-dark), var(--tertiary-color));
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(108, 99, 255, 0.3);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button:disabled {
+      background: linear-gradient(135deg, #b3b3b3, #cccccc);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    #results {
+      margin-top: 40px;
+      display: none;
+    }
+    
+    .result-card {
+      background-color: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 30px;
+      margin-bottom: 30px;
+      border-left: 5px solid var(--primary-color);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--box-shadow);
+      transition: var(--transition);
+    }
+    
+    .result-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .result-card.naive {
+      border-left-color: var(--warning-color);
+    }
+    
+    .result-card.dp {
+      border-left-color: var(--primary-color);
+    }
+    
+    .result-card.manacher {
+      border-left-color: var(--tertiary-color);
+    }
+    
+    .result-title {
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--text-color);
+      font-size: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .complexity {
+      font-size: 14px;
+      color: var(--text-light);
+      background-color: rgba(0,0,0,0.05);
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-family: monospace;
+    }
+    
+    .result-content {
+      margin-bottom: 20px;
+      word-break: break-all;
+    }
+    
+    .palindrome-preview {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #eee;
+      margin-bottom: 20px;
+      font-family: monospace;
+      position: relative;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .palindrome-highlight {
+      background-color: rgba(108, 99, 255, 0.15);
+      color: var(--primary-color);
+      font-weight: bold;
+      padding: 2px 0;
+      border-radius: 2px;
+    }
+    
+    .performance {
+      display: flex;
+      gap: 30px;
+      font-size: 14px;
+      color: var(--text-light);
+      margin-top: 20px;
+      border-top: 1px solid #eee;
+      padding-top: 20px;
+    }
+    
+    .performance-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .performance-item i {
+      font-size: 18px;
+      color: var(--primary-color);
+    }
+    
+    .loading {
+      text-align: center;
+      display: none;
+      margin: 40px 0;
+    }
+    
+    .spinner {
+      border: 4px solid rgba(108, 99, 255, 0.1);
+      border-left: 4px solid var(--primary-color);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error {
+      color: var(--danger-color);
+      background-color: rgba(255, 82, 82, 0.1);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      margin-top: 30px;
+      display: none;
+      border-left: 5px solid var(--danger-color);
+    }
+    
+    .index-info {
+      font-size: 13px;
+      color: var(--text-light);
+      margin-top: 8px;
+      background-color: #f8f9fa;
+      padding: 5px 10px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    
+    .comparison-header {
+      margin-top: 40px;
+      margin-bottom: 30px;
+      text-align: center;
+      color: var(--primary-color);
+      font-size: 1.8rem;
+      position: relative;
+    }
+    
+    .comparison-header:after {
+      content: "";
+      display: block;
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-color), var(--tertiary-color));
+      margin: 15px auto 0;
+      border-radius: 2px;
+    }
+    
+    .tooltip {
+      position: relative;
+      display: inline-block;
+      cursor: help;
+      color: var(--primary-color);
+    }
+    
+    .tooltip .tooltip-text {
+      visibility: hidden;
+      width: 240px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 8px;
+      padding: 12px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 13px;
+      line-height: 1.5;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .tooltip:hover .tooltip-text {
+      visibility: visible;
+      opacity: 0.95;
+    }
+    
+    .algorithm-info {
+      background-color: rgba(247, 249, 252, 0.7);
+      border-radius: 8px;
+      padding: 25px;
+      margin-top: 30px;
+      border: 1px solid rgba(108, 99, 255, 0.2);
+    }
+    
+    .algorithm-info h4 {
+      margin-top: 25px;
+      margin-bottom: 15px;
+      color: var(--primary-color);
+    }
+    
+    ul {
+      padding-left: 20px;
+      margin-bottom: 20px;
+    }
+    
+    li {
+      margin-bottom: 8px;
+    }
+    
+    .highlight-info {
+      background-color: rgba(255, 230, 109, 0.2);
+      border-left: 4px solid var(--accent-color);
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 5px;
+    }
+    
+    .palindrome-length {
+      font-size: 14px;
+      color: var(--text-light);
+      background-color: rgba(108, 99, 255, 0.1);
+      padding: 3px 8px;
+      border-radius: 20px;
+      margin-left: 8px;
+      font-family: monospace;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 15px;
+      }
+      
+      .container {
+        padding: 25px;
+      }
+      
+      .performance {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .header {
+        padding: 0 1rem;
+      }
+      
+      .header .logo {
+        font-size: 1.2rem;
+      }
+      
+      .nav-links li {
+        margin-left: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header with Navigation -->
+  <header class="header">
+    <div class="logo">
+      <i class="fas fa-code"></i>
+      <span>LPS Analyzer</span>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li class="active"><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="main-content">
+    <h1>Longest Palindromic Substring Analyzer</h1>
+    
+    <div class="container">
+      <div class="explanation">
+        <h3>What is a Palindromic Substring?</h3>
+        <p>A palindrome is a sequence that reads the same forward and backward. For example, "racecar", "level", and "madam" are palindromes.</p>
+        <p><strong>This analyzer:</strong></p>
+        <ul>
+          <li>Finds the <strong>longest</strong> palindromic substring in your text</li>
+          <li>Considers letter case (e.g., "Racecar" is not a palindrome, but "racecar" is)</li>
+          <li><strong>Ignores spaces</strong> when comparing characters (e.g., "race car" is treated the same as "racecar")</li>
+          <li>Will identify "pip gag racecar racecar gag pip" as a single palindrome (ignoring spaces)</li>
+          <li>When multiple palindromes of the same maximum length exist, returns the <strong>first one</strong> found in the text</li>
+          <li>Compares three different algorithms with different time and space complexities</li>
+        </ul>
+        
+        <div class="highlight-info">
+          <i class="fas fa-info-circle"></i> <strong>Important:</strong> Spaces are ignored when detecting palindromes. This means "race car" is considered equivalent to "racecar" for palindrome detection. Punctuation and letter case still matter.
+        </div>
+      </div>
+      
+      <div class="input-section">
+        <div class="tabs">
+          <div class="tab active" data-tab="text"><i class="fas fa-keyboard"></i> Text Input</div>
+          <div class="tab" data-tab="file"><i class="fas fa-file-upload"></i> File Upload</div>
+        </div>
+        
+        <div class="tab-content active" id="text-tab">
+          <textarea id="inputString" placeholder="Enter text to analyze, e.g., 'racecar', 'A man, a plan, a canal: Panama', or a longer passage..."></textarea>
+        </div>
+        
+        <div class="tab-content" id="file-tab">
+          <div class="file-upload" id="fileUploadArea">
+            <i class="fas fa-file-upload"></i>
+            <p>Drag & drop your text file here, or click to browse</p>
+            <input type="file" id="fileInput" accept=".txt,.md,.text">
+            <div class="file-info" id="fileInfo">Max file size: 10MB</div>
+            <div class="accepted-files">
+              Accepted file types: <span>.txt</span> <span>.md</span> <span>.text</span>
+            </div>
+          </div>
+        </div>
+        
+        <button type="button" id="runButton"><i class="fas fa-play"></i> Run Algorithms</button>
+      </div>
+      
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Processing... This may take a moment for longer texts.</p>
+      </div>
+      
+      <div class="error" id="error"></div>
+      
+      <div id="results">
+        <h2 class="comparison-header">Algorithm Comparison Results</h2>
+        
+        <div class="result-card naive">
+          <div class="result-title">
+            Naive Approach
+            <span class="complexity" title="Time complexity indicates how the algorithm's execution time grows relative to the input size">O(n²)</span>
+          </div>
+          <div class="result-content">
+            <p><strong>Longest palindrome:</strong> <span id="naive-result">Result</span> <span id="naive-length" class="palindrome-length"></span></p>
+            <div class="palindrome-preview" id="naive-preview"></div>
+            <div class="index-info" id="naive-index"></div>
+          </div>
+          <div class="performance">
+            <div class="performance-item">
+              <i class="fas fa-clock"></i>
+              <span id="naive-time">0 ms</span>
+              <span class="tooltip">ⓘ<span class="tooltip-text">Execution time measures how long the algorithm took to find the longest palindrome.</span></span>
+            </div>
+            <div class="performance-item">
+              <i class="fas fa-memory"></i>
+              <span id="naive-memory">0 MB</span>
+              <span class="tooltip">ⓘ<span class="tooltip-text">Memory usage tracks how much additional heap memory was required to run the algorithm.</span></span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="result-card dp">
+          <div class="result-title">
+            Dynamic Programming
+            <span class="complexity">O(n²)</span>
+          </div>
+          <div class="result-content">
+            <p><strong>Longest palindrome:</strong> <span id="dp-result">Result</span> <span id="dp-length" class="palindrome-length"></span></p>
+            <div class="palindrome-preview" id="dp-preview"></div>
+            <div class="index-info" id="dp-index"></div>
+          </div>
+          <div class="performance">
+            <div class="performance-item">
+              <i class="fas fa-clock"></i>
+              <span id="dp-time">0 ms</span>
+              <span class="tooltip">ⓘ<span class="tooltip-text">Execution time measures how long the algorithm took to find the longest palindrome.</span></span>
+            </div>
+            <div class="performance-item">
+              <i class="fas fa-memory"></i>
+              <span id="dp-memory">0 MB</span>
+              <span class="tooltip">ⓘ<span class="tooltip-text">Memory usage tracks how much additional heap memory was required to run the algorithm.</span></span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="result-card manacher">
+          <div class="result-title">
+            Manacher's Algorithm
+            <span class="complexity">O(n)</span>
+          </div>
+          <div class="result-content">
+            <p><strong>Longest palindrome:</strong> <span id="manacher-result">Result</span> <span id="manacher-length" class="palindrome-length"></span></p>
+            <div class="palindrome-preview" id="manacher-preview"></div>
+            <div class="index-info" id="manacher-index"></div>
+          </div>
+          <div class="performance">
+            <div class="performance-item">
+              <i class="fas fa-clock"></i>
+              <span id="manacher-time">0 ms</span>
+              <span class="tooltip">ⓘ<span class="tooltip-text">Execution time measures how long the algorithm took to find the longest palindrome.</span></span>
+            </div>
+            <div class="performance-item">
+              <i class="fas fa-memory"></i>
+              <span id="manacher-memory">0 MB</span>
+              <span class="tooltip">ⓘ<span class="tooltip-text">Memory usage tracks how much additional heap memory was required to run the algorithm.</span></span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="algorithm-info">
+          <h3>About the Algorithms</h3>
+          <p><strong>Naive Approach:</strong> Expands around each possible center (both characters and spaces between) to find palindromes. Simple but less efficient for large inputs. For each position, it attempts to expand outward as far as possible while maintaining palindrome properties.</p>
+          
+          <p><strong>Dynamic Programming:</strong> Uses a table to store whether each substring is a palindrome, building from smaller to larger substrings. It's more efficient than the naive approach for medium-sized inputs but consumes more memory. For very large inputs (>1000 characters), this implementation automatically switches to a more memory-efficient algorithm to avoid excessive memory usage.</p>
+          
+          <p><strong>Manacher's Algorithm:</strong> A specialized approach that cleverly reuses previous computations to achieve linear time complexity. It's the most efficient algorithm for large inputs, using techniques like symmetry to avoid redundant comparisons. The algorithm transforms the string by adding special characters between each character to handle both odd and even length palindromes uniformly.</p>
+          
+          <h4>How Palindromes Are Detected</h4>
+          <p>All three algorithms match characters with these rules:</p>
+          <ul>
+            <li>Letter case is significant: "Racecar" is NOT a palindrome, but "racecar" is</li>
+            <li>Spaces are ignored: "race car" IS considered a palindrome (equivalent to "racecar")</li>
+            <li>Punctuation is significant: "race,car" is NOT a palindrome</li>
+            <li>When multiple palindromes of the same length exist, only the first one found is returned</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Tab switching
+      const tabs = document.querySelectorAll('.tab');
+      const tabContents = document.querySelectorAll('.tab-content');
+      
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabId = tab.getAttribute('data-tab');
+          
+          // Update active tab
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          // Update active content
+          tabContents.forEach(content => content.classList.remove('active'));
+          document.getElementById(`${tabId}-tab`).classList.add('active');
+        });
+      });
+      
+      // File upload handling
+      const fileUploadArea = document.getElementById('fileUploadArea');
+      const fileInput = document.getElementById('fileInput');
+      const fileInfo = document.getElementById('fileInfo');
+      
+      fileUploadArea.addEventListener('click', () => {
+        fileInput.click();
+      });
+      
+      fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.style.borderColor = '#4361ee';
+        fileUploadArea.style.backgroundColor = 'rgba(67, 97, 238, 0.1)';
+      });
+      
+      fileUploadArea.addEventListener('dragleave', () => {
+        fileUploadArea.style.borderColor = '#ddd';
+        fileUploadArea.style.backgroundColor = '#fafafa';
+      });
+      
+      fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.style.borderColor = '#ddd';
+        fileUploadArea.style.backgroundColor = '#fafafa';
+        
+        if (e.dataTransfer.files.length) {
+          handleFileSelection(e.dataTransfer.files[0]);
+        }
+      });
+      
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+          handleFileSelection(fileInput.files[0]);
+        }
+      });
+      
+      function handleFileSelection(file) {
+        // Check file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          fileInfo.textContent = 'Error: File exceeds 10MB limit';
+          fileInfo.style.color = '#ef476f';
+          return;
+        }
+        
+        // Check file type
+        if (!['text/plain', 'text/markdown', 'text/text', 'application/octet-stream'].includes(file.type) && 
+            !file.name.endsWith('.txt') && !file.name.endsWith('.md') && !file.name.endsWith('.text')) {
+          fileInfo.textContent = 'Error: Only text files are supported (.txt, .md, .text)';
+          fileInfo.style.color = '#ef476f';
+          return;
+        }
+        
+        // Display file info
+        fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+        fileInfo.style.color = '#06d6a0';
+        
+        // Store the file for submission
+        selectedFile = file;
+        
+        // Option 1: Read and display in textarea
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('inputString').value = e.target.result;
+          // Switch to text tab to show the content
+          tabs[0].click();
+        };
+        reader.readAsText(file);
+        
+        // Enable direct upload button
+        document.getElementById('uploadButton').style.display = 'block';
+      }
+      
+      function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' bytes';
+        else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        else return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+      }
+      
+      // Add upload button to file tab
+      const fileTab = document.getElementById('file-tab');
+      const uploadButton = document.createElement('button');
+      uploadButton.id = 'uploadButton';
+      uploadButton.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Process File Directly';
+      uploadButton.style.display = 'none';
+      uploadButton.style.marginTop = '25px';
+      fileTab.appendChild(uploadButton);
+      
+      // Add direct file upload handler
+      let selectedFile = null;
+      uploadButton.addEventListener('click', async () => {
+        if (!selectedFile) {
+          showError('Please select a file first');
+          return;
+        }
+        
+        // Reset UI
+        resultsDiv.style.display = 'none';
+        errorDiv.style.display = 'none';
+        loadingDiv.style.display = 'block';
+        uploadButton.disabled = true;
+        runButton.disabled = true;
+        
+        try {
+          // Create form data for file upload
+          const formData = new FormData();
+          formData.append('file', selectedFile);
+          
+          // Send to server
+          const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Server error occurred');
+          }
+          
+          const data = await response.json();
+          
+          // If the input is very large, we'll only use the truncated version for UI display
+          const displayText = data.input;
+          
+          // Update textarea with truncated text (optional)
+          if (data.fullLength > 1000) {
+            document.getElementById('inputString').value = 
+              displayText + `\n\n[File content truncated for display (${data.fullLength} characters total)]`;
+            tabs[0].click(); // Switch to text tab
+          }
+          
+          displayResults(data, displayText);
+        } catch (error) {
+          showError(error.message || 'Error processing file');
+        } finally {
+          loadingDiv.style.display = 'none';
+          uploadButton.disabled = false;
+          runButton.disabled = false;
+        }
+      });
+      
+      // Form submission and result display
+      const runButton = document.getElementById('runButton');
+      const inputString = document.getElementById('inputString');
+      const resultsDiv = document.getElementById('results');
+      const loadingDiv = document.getElementById('loading');
+      const errorDiv = document.getElementById('error');
+      
+      runButton.addEventListener('click', async () => {
+        const text = inputString.value.trim();
+        
+        if (!text) {
+          showError('Please enter text or upload a file');
+          return;
+        }
+        
+        // Reset UI
+        resultsDiv.style.display = 'none';
+        errorDiv.style.display = 'none';
+        loadingDiv.style.display = 'block';
+        runButton.disabled = true;
+        
+        try {
+          // Use relative URL which will work both locally and when deployed
+          const response = await fetch('/runAlgorithms', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ inputString: text }),
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Server error occurred');
+          }
+          
+          const data = await response.json();
+          displayResults(data, text);
+        } catch (error) {
+          showError(error.message || 'Error processing request');
+        } finally {
+          loadingDiv.style.display = 'none';
+          runButton.disabled = false;
+        }
+      });
+      
+      function displayResults(data, originalText) {
+        // Helper function to create preview with highlighted palindrome
+        function createPreview(palindrome, originalText) {
+          if (!palindrome) return 'No palindrome found';
+          
+          const start = originalText.indexOf(palindrome);
+          if (start === -1) return palindrome; // Just return the palindrome if not found in original text
+          
+          // Create the preview with context
+          let preview = '';
+          const previewStart = Math.max(0, start - 10);
+          const previewEnd = Math.min(originalText.length, start + palindrome.length + 10);
+          
+          if (previewStart > 0) preview += '...';
+          preview += originalText.substring(previewStart, start);
+          preview += `<span class="palindrome-highlight">${palindrome}</span>`;
+          preview += originalText.substring(start + palindrome.length, previewEnd);
+          if (previewEnd < originalText.length) preview += '...';
+          
+          return preview;
+        }
+        
+        // Helper function to count non-space characters
+        function countNonSpaceChars(str) {
+          return str.replace(/\s+/g, '').length;
+        }
+        
+        // Display naive approach results
+        document.getElementById('naive-result').textContent = `"${data.results.naive.lps}"`;
+        document.getElementById('naive-length').textContent = `(length: ${countNonSpaceChars(data.results.naive.lps)})`;
+        document.getElementById('naive-preview').innerHTML = createPreview(data.results.naive.lps, originalText);
+        document.getElementById('naive-time').textContent = data.results.naive.executionTime;
+        document.getElementById('naive-memory').textContent = data.results.naive.memoryUsage;
+        
+        const naiveStart = originalText.indexOf(data.results.naive.lps);
+        if (naiveStart !== -1) {
+          document.getElementById('naive-index').textContent = 
+            `Found at position ${naiveStart} to ${naiveStart + data.results.naive.lps.length - 1}`;
+        }
+        
+        // Display DP approach results
+        document.getElementById('dp-result').textContent = `"${data.results.dp.lps}"`;
+        document.getElementById('dp-length').textContent = `(length: ${countNonSpaceChars(data.results.dp.lps)})`;
+        document.getElementById('dp-preview').innerHTML = createPreview(data.results.dp.lps, originalText);
+        document.getElementById('dp-time').textContent = data.results.dp.executionTime;
+        document.getElementById('dp-memory').textContent = data.results.dp.memoryUsage;
+        
+        const dpStart = originalText.indexOf(data.results.dp.lps);
+        if (dpStart !== -1) {
+          document.getElementById('dp-index').textContent = 
+            `Found at position ${dpStart} to ${dpStart + data.results.dp.lps.length - 1}`;
+        }
+        
+        // Display Manacher's algorithm results
+        document.getElementById('manacher-result').textContent = `"${data.results.manacher.lps}"`;
+        document.getElementById('manacher-length').textContent = `(length: ${countNonSpaceChars(data.results.manacher.lps)})`;
+        document.getElementById('manacher-preview').innerHTML = createPreview(data.results.manacher.lps, originalText);
+        document.getElementById('manacher-time').textContent = data.results.manacher.executionTime;
+        document.getElementById('manacher-memory').textContent = data.results.manacher.memoryUsage;
+        
+        const manacherStart = originalText.indexOf(data.results.manacher.lps);
+        if (manacherStart !== -1) {
+          document.getElementById('manacher-index').textContent = 
+            `Found at position ${manacherStart} to ${manacherStart + data.results.manacher.lps.length - 1}`;
+        }
+        
+        // Show results
+        resultsDiv.style.display = 'block';
+        
+        // Scroll to results
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+      }
+      
+      function showError(message) {
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+        errorDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html> 

@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About - Longest Palindromic Substring Analyzer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #6C63FF;         /* Vibrant purple */
+      --primary-dark: #5A52D9;          /* Darker purple */
+      --secondary-color: #FF6B6B;       /* Coral red */
+      --tertiary-color: #4ECDC4;        /* Turquoise */
+      --accent-color: #FFE66D;          /* Yellow */
+      --light-bg: #F7F9FC;              /* Light background */
+      --card-bg: #ffffff;               /* Card background */
+      --success-color: #06d6a0;         /* Success green */
+      --warning-color: #FF9F1C;         /* Orange warning */
+      --danger-color: #FF5252;          /* Red danger */
+      --text-color: #2D3748;            /* Dark text */
+      --text-light: #718096;            /* Light text */
+      --border-radius: 10px;
+      --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      --transition: all 0.3s ease;
+      --header-height: 70px;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 0;
+      background-color: var(--light-bg);
+      color: var(--text-color);
+      line-height: 1.6;
+      padding-top: var(--header-height);
+    }
+    
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--header-height);
+      background: linear-gradient(90deg, var(--primary-color), var(--tertiary-color));
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+    
+    .header .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+    }
+    
+    .header .logo i {
+      font-size: 1.8rem;
+      margin-right: 10px;
+      color: var(--accent-color);
+    }
+    
+    .nav-links {
+      display: flex;
+      list-style: none;
+    }
+    
+    .nav-links li {
+      margin-left: 1.5rem;
+    }
+    
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+      position: relative;
+      padding: 5px 0;
+    }
+    
+    .nav-links a:hover {
+      color: var(--accent-color);
+    }
+    
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: var(--accent-color);
+      transition: var(--transition);
+    }
+    
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+    
+    .nav-links .active a {
+      color: var(--accent-color);
+    }
+    
+    .nav-links .active a::after {
+      width: 100%;
+    }
+    
+    .main-content {
+      padding: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1, h2, h3 {
+      color: var(--primary-color);
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      text-align: center;
+      font-size: 2.4rem;
+      margin-bottom: 30px;
+      border-bottom: 3px solid var(--secondary-color);
+      padding-bottom: 15px;
+    }
+    
+    h2 {
+      font-size: 1.8rem;
+      margin-top: 40px;
+      color: var(--secondary-color);
+      position: relative;
+      padding-left: 20px;
+    }
+    
+    h2::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 10px;
+      height: 25px;
+      background: linear-gradient(to bottom, var(--primary-color), var(--tertiary-color));
+      border-radius: 4px;
+    }
+    
+    h3 {
+      font-size: 1.4rem;
+      margin-top: 25px;
+      color: var(--primary-color);
+      border-bottom: 2px dashed rgba(108, 99, 255, 0.2);
+      padding-bottom: 8px;
+      display: inline-block;
+    }
+    
+    p {
+      margin-bottom: 20px;
+    }
+    
+    .container {
+      background-color: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 40px;
+      box-shadow: var(--box-shadow);
+      margin-bottom: 40px;
+      border-top: 5px solid var(--primary-color);
+    }
+    
+    .section {
+      margin-bottom: 40px;
+    }
+    
+    .algorithm-card {
+      background-color: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 30px;
+      margin-bottom: 30px;
+      border-left: 5px solid var(--primary-color);
+      box-shadow: var(--box-shadow);
+    }
+    
+    .algorithm-card.naive {
+      border-left-color: var(--warning-color);
+    }
+    
+    .algorithm-card.dp {
+      border-left-color: var(--primary-color);
+    }
+    
+    .algorithm-card.manacher {
+      border-left-color: var(--tertiary-color);
+    }
+    
+    .complexity-badge {
+      display: inline-block;
+      background-color: rgba(108, 99, 255, 0.1);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-family: monospace;
+      margin-left: 10px;
+      font-size: 14px;
+      color: var(--primary-color);
+    }
+    
+    .creator-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .creator-avatars {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 20px;
+    }
+    
+    .avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), var(--tertiary-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 40px;
+      font-weight: bold;
+      box-shadow: var(--box-shadow);
+    }
+    
+    .creator-info {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--primary-color);
+    }
+    
+    .approach-card {
+      background-color: rgba(247, 249, 252, 0.7);
+      border-radius: 8px;
+      padding: 25px;
+      margin-top: 30px;
+      border: 1px solid rgba(108, 99, 255, 0.2);
+    }
+    
+    .feature-list {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    
+    .feature-list li {
+      position: relative;
+      padding-left: 30px;
+      margin-bottom: 15px;
+    }
+    
+    .feature-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--success-color);
+      font-weight: bold;
+      font-size: 18px;
+    }
+    
+    .code-block {
+      background-color: #F1F5F9;
+      border-radius: 8px;
+      padding: 20px;
+      font-family: monospace;
+      overflow: auto;
+      margin: 15px 0;
+      border-left: 4px solid var(--tertiary-color);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .diagram {
+      width: 100%;
+      max-width: 600px;
+      margin: 30px auto;
+      display: block;
+      border-radius: var(--border-radius);
+      border: 1px solid #eee;
+      box-shadow: var(--box-shadow);
+    }
+    
+    .algorithm-steps {
+      counter-reset: step-counter;
+      list-style-type: none;
+      padding-left: 0;
+    }
+    
+    .algorithm-steps li {
+      counter-increment: step-counter;
+      position: relative;
+      padding-left: 35px;
+      margin-bottom: 15px;
+    }
+    
+    .algorithm-steps li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 0;
+      top: 2px;
+      width: 25px;
+      height: 25px;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    .emphasis {
+      background-color: rgba(255, 230, 109, 0.2);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    
+    .highlight-info {
+      background-color: rgba(108, 99, 255, 0.1);
+      border-left: 4px solid var(--primary-color);
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 5px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 15px;
+      }
+      
+      .container {
+        padding: 25px;
+      }
+      
+      .creator-avatars {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+      
+      .header {
+        padding: 0 1rem;
+      }
+      
+      .header .logo {
+        font-size: 1.2rem;
+      }
+      
+      .nav-links li {
+        margin-left: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header with Navigation -->
+  <header class="header">
+    <div class="logo">
+      <i class="fas fa-code"></i>
+      <span>LPS Analyzer</span>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li class="active"><a href="about.html">About</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="main-content">
+    <h1>About the Longest Palindromic Substring Project</h1>
+    
+    <div class="container">
+      <!-- Creators Section -->
+      <div class="section creator-section">
+        <h2>Created By</h2>
+        <div class="creator-avatars">
+          <div class="avatar">K</div>
+          <div class="avatar">S</div>
+        </div>
+        <div class="creator-info">
+          <p>Kobe Smallman & Skyler Black</p>
+        </div>
+      </div>
+      
+      <!-- Project Approach -->
+      <div class="section">
+        <h2>Project Approach</h2>
+        <p>This project was designed to compare different algorithmic approaches to solving the classic "Longest Palindromic Substring" (LPS) problem. We chose Node.js as our platform due to its efficiency in handling asynchronous operations and its excellent performance for text processing applications.</p>
+        
+        <div class="approach-card">
+          <h3>Why Three Different Algorithms?</h3>
+          <p>The LPS problem can be solved in multiple ways, each with different trade-offs between time complexity, space complexity, and implementation complexity. By implementing three distinct approaches, we can:</p>
+          <ul class="feature-list">
+            <li>Compare performance across different input sizes</li>
+            <li>Demonstrate how algorithmic choices impact execution time and memory usage</li>
+            <li>Provide educational insights into algorithm design principles</li>
+            <li>Showcase real-world applications of different time complexity classes (O(n²) vs O(n))</li>
+          </ul>
+          
+          <h3>Technical Stack</h3>
+          <p>Our implementation uses:</p>
+          <ul>
+            <li><strong>Backend:</strong> Node.js with Express</li>
+            <li><strong>Frontend:</strong> Pure HTML/CSS/JavaScript for maximum performance</li>
+            <li><strong>Performance Measurement:</strong> Node.js built-in performance hooks API</li>
+            <li><strong>Memory Tracking:</strong> Custom heap monitoring</li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Algorithm Details -->
+      <div class="section">
+        <h2>Algorithm Details</h2>
+        
+        <!-- Naive Approach -->
+        <div class="algorithm-card naive">
+          <h3>Naive Approach <span class="complexity-badge">O(n²)</span></h3>
+          <p>This is a straightforward approach that relies on expanding around potential palindrome centers.</p>
+          
+          <h4>How It Works:</h4>
+          <ul class="algorithm-steps">
+            <li>Treat each character and each space between characters as a potential center of a palindrome</li>
+            <li>For each potential center, expand outwards while checking if the expanded substring remains a palindrome</li>
+            <li>Track the longest palindrome found during this process</li>
+            <li>Handle both odd-length palindromes (centered at a character) and even-length palindromes (centered between characters)</li>
+          </ul>
+          
+          <div class="code-block">
+            <pre>function expandAroundCenter(s, left, right) {
+  // Skip spaces when comparing characters
+  while (left >= 0 && right < s.length) {
+    if (left > 0 && s[left] === ' ') { left--; continue; }
+    if (right < s.length - 1 && s[right] === ' ') { right++; continue; }
+    if (s[left] !== s[right]) break;
+    left--;
+    right++;
+  }
+  return [left + 1, right - 1]; // Return the palindrome boundaries
+}</pre>
+          </div>
+          
+          <p><strong>Advantages:</strong> Simple to implement and understand, works well for small inputs.</p>
+          <p><strong>Disadvantages:</strong> Less efficient for large inputs due to quadratic time complexity.</p>
+        </div>
+        
+        <!-- Dynamic Programming -->
+        <div class="algorithm-card dp">
+          <h3>Dynamic Programming <span class="complexity-badge">O(n²)</span></h3>
+          <p>This approach builds a table to store whether each substring is a palindrome, using smaller subproblems to solve larger ones.</p>
+          
+          <h4>How It Works:</h4>
+          <ul class="algorithm-steps">
+            <li>Create a 2D table where table[i][j] represents whether the substring from index i to j is a palindrome</li>
+            <li>Initialize all single characters as palindromes (table[i][i] = true)</li>
+            <li>Check all possible substring lengths, filling the table incrementally</li>
+            <li>For a substring to be a palindrome, its outer characters must match and the inner substring must be a palindrome</li>
+            <li>Track the longest palindrome found during this process</li>
+          </ul>
+          
+          <div class="code-block">
+            <pre>// Initialize DP table
+const dp = Array(n).fill().map(() => Array(n).fill(false));
+
+// All single characters are palindromes
+for (let i = 0; i < n; i++) {
+  dp[i][i] = true;
+}
+
+// Check for palindromes of different lengths
+for (let len = 2; len <= n; len++) {
+  for (let i = 0; i <= n - len; i++) {
+    let j = i + len - 1;
+    
+    // Skip spaces when comparing
+    if (s[i] === ' ') continue;
+    if (s[j] === ' ') continue;
+    
+    // Check if substring is a palindrome
+    if (s[i] === s[j] && (len == 2 || dp[i+1][j-1])) {
+      dp[i][j] = true;
+      if (len > maxLength) {
+        maxLength = len;
+        start = i;
+      }
+    }
+  }
+}</pre>
+          </div>
+          
+          <p><strong>Advantages:</strong> More structured approach, avoids redundant calculations present in the naive approach.</p>
+          <p><strong>Disadvantages:</strong> Requires O(n²) space for the DP table, which can be memory-intensive for very large inputs.</p>
+        </div>
+        
+        <!-- Manacher's Algorithm -->
+        <div class="algorithm-card manacher">
+          <h3>Manacher's Algorithm <span class="complexity-badge">O(n)</span></h3>
+          <p>This specialized algorithm achieves linear time complexity by reusing previously computed results and leveraging symmetry properties of palindromes.</p>
+          
+          <h4>How It Works:</h4>
+          <ul class="algorithm-steps">
+            <li>Transform the input string by inserting special characters (e.g., '#') between each character to handle both odd and even length palindromes uniformly</li>
+            <li>Initialize an array P where P[i] represents the radius of the palindrome centered at position i</li>
+            <li>Maintain a center position C and its right boundary R of the rightmost palindrome encountered so far</li>
+            <li>For each position i:
+              <ul>
+                <li>If i < R, use the mirror property to initialize P[i] with a minimum guaranteed value</li>
+                <li>Expand around i to find the actual palindrome radius</li>
+                <li>Update C and R if the palindrome at i extends beyond R</li>
+              </ul>
+            </li>
+            <li>Extract the longest palindrome from the P array</li>
+          </ul>
+          
+          <div class="code-block">
+            <pre>// Transform string to handle both odd and even length palindromes
+let T = '#';
+for (let i = 0; i < s.length; i++) {
+  T += s[i] + '#';
+}
+
+const n = T.length;
+const P = Array(n).fill(0);
+let C = 0, R = 0;
+
+for (let i = 0; i < n; i++) {
+  if (i < R) {
+    P[i] = Math.min(R - i, P[2 * C - i]);
+  }
+  
+  // Expand around center i
+  while (i + P[i] + 1 < n && i - P[i] - 1 >= 0 && 
+         T[i + P[i] + 1] === T[i - P[i] - 1]) {
+    P[i]++;
+  }
+  
+  // Update C and R if the palindrome at i extends beyond R
+  if (i + P[i] > R) {
+    C = i;
+    R = i + P[i];
+  }
+}</pre>
+          </div>
+          
+          <p><strong>Advantages:</strong> Linear time complexity (O(n)), making it the most efficient for large inputs.</p>
+          <p><strong>Disadvantages:</strong> More complex implementation and harder to understand intuitively.</p>
+        </div>
+      </div>
+      
+      <!-- Extended Applications of Dynamic Programming -->
+      <div class="section">
+        <h2>Extended Applications of Dynamic Programming</h2>
+        <p>Dynamic programming (DP) isn't just about solving the Longest Palindromic Substring problem—it provides a general framework that can be adapted and extended to tackle many related problems.</p>
+        
+        <div class="algorithm-card dp">
+          <h3>Versatility and Extensibility of DP</h3>
+          
+          <h4>Modular Subproblem Solutions:</h4>
+          <p>DP breaks a problem down into overlapping subproblems, solving each one only once and storing their results in a table. This modular approach means you can often reuse or adapt parts of the DP solution to solve similar problems that share overlapping structures.</p>
+          
+          <div class="code-block">
+            <pre>// This DP approach for palindromes can be modified for:
+// - Longest Common Subsequence
+// - Longest Increasing Subsequence
+// - Edit Distance problems</pre>
+          </div>
+          
+          <h4>Customizing for Additional Constraints:</h4>
+          <p>Once you have a DP framework in place, you can often add extra dimensions or modify the recurrence to handle additional constraints. For example, you might want to not only find the longest palindromic substring but also count all palindromic substrings, or find the one that meets certain criteria (like containing a specific character).</p>
+          
+          <h4>Adaptation to Similar Pattern Problems:</h4>
+          <p>The technique used in DP for the palindromic substring problem—where you build up solutions for smaller segments and then use those results to solve larger segments—is a pattern that appears in many other problems:</p>
+          <ul>
+            <li><strong>Longest Common Subsequence (LCS):</strong> Comparing two sequences and finding the longest sequence common to both.</li>
+            <li><strong>Edit Distance:</strong> Determining the minimum number of operations required to transform one string into another.</li>
+            <li><strong>Partition Problems:</strong> Such as partitioning a set or string into palindromic parts.</li>
+            <li><strong>Subset Sum and Knapsack Variants:</strong> Where you decide which items to include based on certain cumulative properties.</li>
+          </ul>
+          
+          <h4>Facilitating Backtracking and Reconstruction:</h4>
+          <p>In many DP problems, once you fill out the table, you can backtrack through it to reconstruct the actual solution. This reconstruction process itself can be adapted to yield different forms of output, which is useful when the problem specification changes or when additional information is required.</p>
+          
+          <div class="highlight-info">
+            <p>In summary, dynamic programming offers not just a solution to a particular problem, but a powerful, adaptable methodology. It provides a structured way to handle complex problems with overlapping subproblems and optimal substructure, making it an invaluable approach for many problems in computer science.</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Implementation Approaches -->
+      <div class="section">
+        <h2>Implementation Approaches Comparison</h2>
+        <p>When designing this project, we considered several implementation approaches. Here's an analysis of the alternatives and why we chose our current method:</p>
+        
+        <div class="approach-card">
+          <h3>Option 1: Compiled Language (C++ in Terminal)</h3>
+          
+          <h4>Advantages:</h4>
+          <ul class="feature-list">
+            <li>High precision for performance measurements</li>
+            <li>Superior execution efficiency for computationally intensive tasks</li>
+            <li>Fine-grained control over memory allocation and usage</li>
+          </ul>
+          
+          <h4>Limitations:</h4>
+          <ul>
+            <li>Platform-specific complexities and portability issues</li>
+            <li>Longer development cycle (compile-link-run)</li>
+            <li>More challenging to create user-friendly interfaces</li>
+            <li>Installation requirements for end users</li>
+          </ul>
+          
+          <div class="code-block">
+            <pre>// C++ approach for precise timing
+#include <chrono>
+using namespace std::chrono;
+
+auto start = high_resolution_clock::now();
+std::string result = longestPalindrome(s);
+auto end = high_resolution_clock::now();
+auto duration = duration_cast<microseconds>(end - start);</pre>
+          </div>
+        </div>
+        
+        <div class="approach-card">
+          <h3>Option 2: Pure Browser-Based Approach (Chrome)</h3>
+          
+          <h4>Advantages:</h4>
+          <ul class="feature-list">
+            <li>Easily accessible to users (no installation required)</li>
+            <li>Rapid prototyping with browser developer tools</li>
+            <li>Cross-platform by nature</li>
+          </ul>
+          
+          <h4>Limitations:</h4>
+          <ul>
+            <li>Inaccurate memory measurements due to browser restrictions</li>
+            <li>Performance varies between browsers and versions</li>
+            <li>Limited control over execution environment</li>
+            <li>Browser security restrictions impact measurement precision</li>
+          </ul>
+        </div>
+        
+        <div class="approach-card">
+          <h3>Why We Chose Node.js</h3>
+          
+          <h4>Balanced Solution:</h4>
+          <ul class="feature-list">
+            <li>Access to precise performance metrics (process.hrtime.bigint() and process.memoryUsage())</li>
+            <li>Seamless integration of front-end and back-end</li>
+            <li>Consistent behavior across different operating systems</li>
+            <li>Efficient deployment and minimal setup requirements</li>
+          </ul>
+          
+          <div class="code-block">
+            <pre>// Node.js approach for memory and time measurement
+const memBefore = process.memoryUsage().heapUsed;
+const startTime = process.hrtime.bigint();
+
+const result = algorithm(inputText);
+
+const endTime = process.hrtime.bigint();
+const memAfter = process.memoryUsage().heapUsed;
+
+const elapsedMs = Number(endTime - startTime) / 1_000_000;
+const heapUsed = (memAfter - memBefore) / (1024 * 1024);</pre>
+          </div>
+          
+          <p>In summary, while a C++ approach might offer raw performance benefits and a browser-only solution provides the easiest access, our Node.js implementation strikes an optimal balance between precision in performance measurement, ease of development, and a smooth user experience.</p>
+        </div>
+      </div>
+      
+      <!-- Expected Outputs -->
+      <div class="section">
+        <h2>Expected Outputs</h2>
+        <p>The LPS Analyzer provides consistent results across all three algorithms, with specific handling of edge cases:</p>
+        
+        <div class="highlight-info">
+          <h3>Key Behavior to Expect:</h3>
+          <ul>
+            <li><strong>Spaces are ignored</strong> in palindrome detection, meaning "race car" is equivalent to "racecar"</li>
+            <li>Letter case is significant (e.g., "Racecar" is NOT a palindrome)</li>
+            <li>When multiple palindromes of the same maximum length exist, the <strong>first occurrence</strong> is returned</li>
+            <li>The length calculation excludes spaces, reflecting only the actual characters</li>
+            <li>Punctuation and special characters are considered in the palindrome matching</li>
+          </ul>
+        </div>
+        
+        <h3>Example Outputs:</h3>
+        <table border="1" style="width:100%; border-collapse: collapse; margin: 20px 0;">
+          <thead style="background-color: rgba(108, 99, 255, 0.1);">
+            <tr>
+              <th style="padding: 12px;">Input Text</th>
+              <th style="padding: 12px;">Longest Palindrome</th>
+              <th style="padding: 12px;">Length (excluding spaces)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 12px;">"racecar"</td>
+              <td style="padding: 12px;">"racecar"</td>
+              <td style="padding: 12px;">7</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px;">"race car"</td>
+              <td style="padding: 12px;">"race car"</td>
+              <td style="padding: 12px;">7</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px;">"A man, a plan, a canal: Panama"</td>
+              <td style="padding: 12px;">"a man, a plan, a canal: Panama"</td>
+              <td style="padding: 12px;">21</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px;">"bob and dad are level-headed"</td>
+              <td style="padding: 12px;">"level"</td>
+              <td style="padding: 12px;">5</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px;">"kayak level reviver level kayak"</td>
+              <td style="padding: 12px;">"kayak level reviver level kayak"</td>
+              <td style="padding: 12px;">25</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- How It Works -->
+      <div class="section">
+        <h2>How It Works</h2>
+        <p>The LPS Analyzer is a full-stack application that processes text input through the following flow:</p>
+        
+        <h3>System Architecture:</h3>
+        <div class="highlight-info">
+          <ol>
+            <li><strong>User Interface (Frontend):</strong> HTML/CSS/JavaScript provides an intuitive interface for text input, file uploads, and results display</li>
+            <li><strong>API Layer:</strong> JavaScript code sends AJAX requests to the backend with the input text</li>
+            <li><strong>Server (Node.js/Express):</strong> Receives requests and processes them through all three algorithms in parallel</li>
+            <li><strong>Algorithm Processing:</strong> Each algorithm executes while performance metrics are collected</li>
+            <li><strong>Response:</strong> Results including the longest palindromic substring, location indices, execution time, and memory usage are returned to the frontend</li>
+            <li><strong>Results Display:</strong> The UI presents the findings with visual highlighting of the palindrome within the original text</li>
+          </ol>
+        </div>
+        
+        <h3>Performance Measurement:</h3>
+        <p>The system uses Node.js built-in performance hooks to accurately measure execution time and heap usage:</p>
+        <div class="code-block">
+          <pre>// Time measurement
+const startTime = performance.now();
+const result = algorithm(inputText);
+const endTime = performance.now();
+const executionTime = endTime - startTime;
+
+// Memory measurement
+const memoryBefore = process.memoryUsage().heapUsed;
+const result = algorithm(inputText);
+const memoryAfter = process.memoryUsage().heapUsed;
+const memoryUsage = memoryAfter - memoryBefore;</pre>
+        </div>
+        
+        <h3>Space Handling:</h3>
+        <p>All algorithms are implemented to ignore spaces when determining palindromes, allowing "race car" to be recognized as a palindrome equivalent to "racecar". This is achieved by skipping spaces during character comparisons while preserving the original spacing in the result.</p>
+        
+        <h3>Technical Considerations:</h3>
+        <ul>
+          <li><strong>Large Input Handling:</strong> The server is configured to accept inputs up to 10MB in size</li>
+          <li><strong>Error Handling:</strong> Graceful handling of edge cases and errors with user-friendly messages</li>
+          <li><strong>Responsive Design:</strong> The UI adapts to different screen sizes for optimal user experience</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html> 
