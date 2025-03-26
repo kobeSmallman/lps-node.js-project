@@ -644,6 +644,12 @@ return originalStr.substring(origStart, origEnd + 1);</pre>
           <div class="highlight-info">
             <i class="fas fa-lightbulb"></i> <strong>Implementation Note:</strong> Our implementation automatically switches to an optimized version for large inputs (over 5000 characters) while maintaining the same conceptual approach. This significantly improves performance while preserving the characteristics of the naive algorithm.
           </div>
+          
+          <div class="highlight-info" style="background-color: rgba(255, 107, 107, 0.1); border-left-color: var(--secondary-color);">
+            <i class="fas fa-exclamation-circle"></i> <strong>Important Clarification:</strong> While we optimize the implementation for large inputs, it's crucial to understand that this does <em>not</em> change the theoretical time complexity of the algorithm, which remains O(n²) for the optimized naive approach. The optimization reduces constant factors and improves real-world performance, but the asymptotic complexity stays the same.
+            
+            <p style="margin-top: 10px;"><strong>Why not use optimized versions for all inputs?</strong> For smaller inputs (under 5000 characters), the overhead of setting up the optimizations (creating index mappings, additional variable tracking) can actually be slower than the straightforward implementation. The optimization becomes beneficial only when input size grows large enough that the reduced number of operations outweighs the setup cost.</p>
+          </div>
         </div>
         
         <!-- Dynamic Programming -->
@@ -888,6 +894,12 @@ return originalStr.substring(origStart, origEnd + 1);</pre>
           <div class="highlight-info">
             <i class="fas fa-lightbulb"></i> <strong>Implementation Note:</strong> Our implementation automatically falls back to a more memory-efficient algorithm for inputs over 10,000 characters to prevent memory exhaustion. This ensures reliable performance even with exceptionally large texts.
           </div>
+          
+          <div class="highlight-info" style="background-color: rgba(255, 107, 107, 0.1); border-left-color: var(--secondary-color);">
+            <i class="fas fa-exclamation-circle"></i> <strong>Important Clarification:</strong> The memory optimization for large inputs doesn't change the theoretical time complexity of O(n²) for dynamic programming. Rather, it avoids the O(n²) space complexity that would otherwise cause memory issues with very large inputs.
+            
+            <p style="margin-top: 10px;"><strong>Why not use the optimized version for all inputs?</strong> For smaller inputs, the traditional DP approach with the 2D table has better constant factors and less overhead. The extra setup required for the optimized approach is only worth it when the input size would cause memory problems with the full DP table.</p>
+          </div>
         </div>
         
         <!-- Manacher's Algorithm -->
@@ -1030,7 +1042,7 @@ const P = Array(n).fill(0);</pre>
   if (R > i) {
     P[i] = Math.min(R - i, P[2 * C - i]);
   }</pre>
-            <p><strong>Palindrome Symmetry Property:</strong> This is the key insight of Manacher's algorithm. If position i is within the right boundary of our current rightmost palindrome (R > i), we can use the symmetry property to initialize P[i] based on its mirror position (2*C - i) relative to the center C. However, we need to be careful not to exceed the right boundary, hence the minimum operation.</p>
+            <p><strong>Palindrome Symmetry Property:</strong> This is the key insight of Manacher's algorithm. If position i is within the right boundary of our current rightmost palindrome (R > i), we can use the symmetry property to initialize P[i] based on its mirror position, avoiding redundant character comparisons.</p>
             
             <pre>  // Expand around center i
   while (i + P[i] + 1 < n && i - P[i] - 1 >= 0 && T[i + P[i] + 1] === T[i - P[i] - 1]) {
@@ -1076,6 +1088,12 @@ return originalStr.substring(origStart, origEnd + 1);</pre>
           <div class="highlight-info">
             <i class="fas fa-lightbulb"></i> <strong>Implementation Note:</strong> The transformation step with special characters is what enables Manacher's algorithm to handle both odd and even length palindromes with a single unified approach. Combined with the clever use of symmetry, this algorithm achieves the theoretical minimum time complexity for the LPS problem.
           </div>
+          
+          <div class="highlight-info" style="background-color: rgba(255, 107, 107, 0.1); border-left-color: var(--secondary-color);">
+            <i class="fas fa-exclamation-circle"></i> <strong>Important Clarification:</strong> Manacher's algorithm consistently maintains O(n) time complexity for all input sizes. However, it's worth noting that for small inputs, the overhead of the transformation and array initialization can make it perform worse in practice than the simpler approaches, despite its superior asymptotic efficiency.
+            
+            <p style="margin-top: 10px;"><strong>Why might Manacher's seem slower in benchmarks?</strong> Algorithm efficiency is about both asymptotic complexity and constant factors. For smaller inputs, the constant overhead of Manacher's algorithm can dominate its linear time advantage. Only with sufficiently large inputs will the O(n) vs O(n²) difference become the determining factor in performance.</p>
+          </div>
         </div>
         
         <div class="highlight-info" style="margin-top: 40px; background-color: rgba(255, 230, 109, 0.2); border-left-color: var(--warning-color);">
@@ -1086,6 +1104,21 @@ return originalStr.substring(origStart, origEnd + 1);</pre>
             <li>Return the substring from the original text (with spaces preserved) as the final result</li>
           </ol>
           This ensures that all algorithms produce consistent results and can be fairly compared against each other.
+        </div>
+        
+        <div class="highlight-info" style="margin-top: 20px; background-color: rgba(78, 205, 196, 0.1); border-left-color: var(--tertiary-color);">
+          <i class="fas fa-balance-scale"></i> <strong>Performance Comparison Reality Check:</strong> 
+          <p>When interpreting the performance results of these algorithms, it's important to understand that our implementations include practical optimizations that might make the benchmarks appear different from what theory would predict:</p>
+          
+          <ul>
+            <li>The "naive" algorithm uses a more efficient implementation for large inputs that gives it O(n²) performance instead of the theoretical O(n³)</li>
+            <li>The dynamic programming approach avoids memory issues by switching techniques for very large inputs</li>
+            <li>Manacher's algorithm maintains its O(n) complexity but has higher constant overhead that can make it less efficient for smaller inputs</li>
+          </ul>
+          
+          <p>As a result, you might see the "naive" approach outperforming Manacher's algorithm for certain input sizes. This is not a flaw but a reflection of the practical trade-offs between asymptotic efficiency and implementation overhead.</p>
+          
+          <p>For truly enormous inputs (beyond what most users would submit), Manacher's O(n) approach would eventually outperform any O(n²) approach, regardless of optimizations.</p>
         </div>
       </div>
       
