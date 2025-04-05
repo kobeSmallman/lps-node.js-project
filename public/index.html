@@ -724,6 +724,169 @@
       border-radius: 4px;
       z-index: 2;
     }
+    
+    /* Sample buttons styling */
+    .sample-files {
+      margin: 25px 0;
+      text-align: center;
+    }
+    
+    .sample-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .sample-btn {
+      background: linear-gradient(135deg, var(--tertiary-color), var(--primary-color));
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: var(--transition);
+      width: auto;
+      max-width: none;
+      margin: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 2px 5px rgba(108, 99, 255, 0.2);
+    }
+    
+    .sample-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(108, 99, 255, 0.3);
+    }
+    
+    .sample-btn i {
+      font-size: 1.1rem;
+    }
+    
+    .sample-files-section {
+      margin-top: 20px;
+      border-top: 1px dashed #ddd;
+      padding-top: 15px;
+      text-align: center;
+    }
+    
+    .sample-files-section h4 {
+      margin-bottom: 15px;
+      color: var(--text-light);
+      font-size: 16px;
+    }
+    
+    @media (max-width: 768px) {
+      .sample-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+    
+    /* Show more button for long palindromes */
+    .show-more-btn {
+      display: inline-block;
+      margin-left: 10px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .show-more-btn:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    /* Modal for displaying full palindrome */
+    .palindrome-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .palindrome-modal-content {
+      background-color: white;
+      padding: 25px;
+      border-radius: var(--border-radius);
+      max-width: 80%;
+      max-height: 80%;
+      overflow-y: auto;
+      position: relative;
+    }
+    
+    .palindrome-modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-light);
+    }
+    
+    .full-palindrome {
+      background-color: rgba(108, 99, 255, 0.05);
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 3px solid var(--primary-color);
+      margin: 15px 0;
+      word-break: break-all;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .algorithm-order-info {
+      background-color: #f0f8ff;
+      border-left: 4px solid #1e90ff;
+      padding: 10px 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    
+    .timing-details {
+      margin-top: 8px;
+      padding: 8px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    
+    .detail-label {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    
+    .detail-value {
+      font-family: monospace;
+      word-break: break-all;
+    }
+    
+    .iterations {
+      font-size: 0.8em;
+      color: #666;
+      margin-left: 5px;
+    }
+    
+    .fastest-time {
+      color: #2e7d32;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -785,6 +948,15 @@
         
         <div class="tab-content active" id="text-tab">
           <textarea id="inputString" placeholder="Enter text to analyze, e.g., 'racecar', 'A man, a plan, a canal: Panama', or a longer passage..."></textarea>
+          
+          <div class="sample-files-section">
+            <h4>Try a sample file:</h4>
+            <div class="sample-buttons">
+              <button type="button" id="smallSampleBtn" class="sample-btn"><i class="fas fa-file-alt"></i> Small Sample</button>
+              <button type="button" id="mediumSampleBtn" class="sample-btn"><i class="fas fa-file-alt"></i> Medium Sample</button>
+              <button type="button" id="largeSampleBtn" class="sample-btn"><i class="fas fa-file-alt"></i> Large Sample</button>
+            </div>
+          </div>
         </div>
         
         <div class="tab-content" id="file-tab">
@@ -909,8 +1081,28 @@
     </div>
   </div>
   
+  <div class="palindrome-modal" id="palindromeModal">
+    <div class="palindrome-modal-content">
+      <span class="palindrome-modal-close">&times;</span>
+      <h3>Full Palindrome</h3>
+      <div class="full-palindrome" id="fullPalindromeContent"></div>
+    </div>
+  </div>
+  
   <script>
+    // Define algorithm friendly names
+    const algorithmNames = {
+      'naive': 'Naive Approach',
+      'dp': 'Dynamic Programming',
+      'manacher': 'Manacher\'s Algorithm'
+    };
+    
     document.addEventListener('DOMContentLoaded', () => {
+      // Common elements
+      const inputString = document.getElementById('inputString');
+      const resultsDiv = document.getElementById('results');
+      const runButton = document.getElementById('runButton');
+      
       // Tab switching
       const tabs = document.querySelectorAll('.tab');
       const tabContents = document.querySelectorAll('.tab-content');
@@ -927,6 +1119,65 @@
           tabContents.forEach(content => content.classList.remove('active'));
           document.getElementById(`${tabId}-tab`).classList.add('active');
         });
+      });
+      
+      // Sample files functionality
+      const smallSampleBtn = document.getElementById('smallSampleBtn');
+      const mediumSampleBtn = document.getElementById('mediumSampleBtn');
+      const largeSampleBtn = document.getElementById('largeSampleBtn');
+      
+      // Load sample file content
+      async function loadSampleFile(filename) {
+        try {
+          // Show loading indicator
+          showLoading(`Loading ${filename}...`);
+          
+          // Fetch the sample file
+          const response = await fetch(`/PreSets/${filename}`);
+          if (!response.ok) {
+            throw new Error(`Failed to load sample file (${response.status})`);
+          }
+          
+          // Read the file content
+          const content = await response.text();
+          
+          // Update the textarea with the file content
+          inputString.value = content;
+          
+          // Ensure we're on the text input tab
+          tabs.forEach(t => t.classList.remove('active'));
+          tabContents.forEach(c => c.classList.remove('active'));
+          document.querySelector('[data-tab="text"]').classList.add('active');
+          document.getElementById('text-tab').classList.add('active');
+          
+          // Hide any previous results
+          resultsDiv.style.display = 'none';
+          
+          hideLoading();
+          
+          // Optional: Scroll to the textarea to show the loaded content
+          inputString.scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+          console.error('Error loading sample file:', error);
+          showError(`Error loading sample file: ${error.message}`);
+          hideLoading();
+        }
+      }
+      
+      // Add click handlers for sample buttons
+      smallSampleBtn.addEventListener('click', () => {
+        console.log('Loading small sample file');
+        loadSampleFile('smallImproved.txt');
+      });
+      
+      mediumSampleBtn.addEventListener('click', () => {
+        console.log('Loading medium sample file');
+        loadSampleFile('mediumImproved.txt');
+      });
+      
+      largeSampleBtn.addEventListener('click', () => {
+        console.log('Loading large sample file');
+        loadSampleFile('largeImproved.txt');
       });
       
       // File upload handling
@@ -1084,12 +1335,12 @@
           
           // If successful, display the results
           console.log('Processing successful, displaying results');
-          displayResults(data, data.input);
+          displayResults(data);
           
           // Show a shortened version in the textarea for reference
           if (data.fullLength > 1000) {
             document.getElementById('inputString').value = 
-              data.input + `\n\n[File content truncated for display (${data.fullLength} characters total)]`;
+              (data.input || '') + `\n\n[File content truncated for display (${data.fullLength} characters total)]`;
             // Switch to text tab to show content
             tabs[0].click();
           }
@@ -1110,12 +1361,6 @@
       });
       
       // Form submission and result display
-      const runButton = document.getElementById('runButton');
-      const inputString = document.getElementById('inputString');
-      const resultsDiv = document.getElementById('results');
-      const loadingDiv = document.getElementById('loading');
-      const errorDiv = document.getElementById('error');
-      
       runButton.addEventListener('click', async () => {
         const text = inputString.value.trim();
         
@@ -1160,7 +1405,7 @@
             throw new Error(data?.error || `Server error: ${response.status}`);
           }
           
-          displayResults(data, text);
+          displayResults(data);
         } catch (error) {
           console.error('Request error:', error);
           showError(error.message || 'Error processing request');
@@ -1170,137 +1415,95 @@
         }
       });
       
-      function displayResults(data, originalText) {
-        // Helper function to create preview with highlighted palindrome
-        function createPreview(palindrome, originalText) {
-          if (!palindrome) return 'No palindrome found';
-          if (palindrome === 'Skipped for large input') return 'Algorithm skipped for large input';
-          if (palindrome.startsWith('Result found but took longer')) {
-            // For timed out results, extract just the palindrome part without the timeout message
-            return 'Algorithm took longer than expected, but found a result';
-          }
-          
-          const start = originalText.indexOf(palindrome);
-          if (start === -1) return palindrome; // Just return the palindrome if not found in original text
-          
-          // Create the preview with context
-          let preview = '';
-          const previewStart = Math.max(0, start - 10);
-          const previewEnd = Math.min(originalText.length, start + palindrome.length + 10);
-          
-          if (previewStart > 0) preview += '...';
-          preview += originalText.substring(previewStart, start);
-          preview += `<span class="palindrome-highlight">${palindrome}</span>`;
-          preview += originalText.substring(start + palindrome.length, previewEnd);
-          if (previewEnd < originalText.length) preview += '...';
-          
-          return preview;
-        }
+      function formatMemory(bytes) {
+        if (!bytes || isNaN(bytes)) return '0 B';
+        if (bytes < 1024) return bytes.toFixed(2) + ' B';
+        else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+        else return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+      }
+      
+      function displayResults(data) {
+        const resultsDiv = document.getElementById('results');
         
-        // Helper function to count non-space characters
-        function countNonSpaceChars(str) {
-          if (!str || typeof str !== 'string') return 0;
-          if (str.startsWith('Result found but took longer')) return 'N/A';
-          return str.replace(/\s+/g, '').length;
-        }
-        
-        // Helper function to add timeout warning if needed
-        function formatResultWithWarning(result, timedOut) {
-          if (timedOut) {
-            return `${result} <span class="badge bg-warning">Took longer than expected</span>`;
-          }
-          return `"${result}"`;
-        }
-        
-        // Helper function to format memory display with warning if there was an issue
-        function formatMemoryDisplay(memoryValue, hasIssue) {
-          if (hasIssue) {
-            // If memory measurement had an issue, show with an asterisk and tooltip
-            return `<span title="Memory measurement was affected by garbage collection">${memoryValue < 0 ? '?' : memoryValue} KB*</span> <span class="tooltip">ⓘ<span class="tooltip-text">* Memory measurement was affected by garbage collection during algorithm execution. This does not affect the accuracy of the palindrome detection or time measurement.</span></span>`;
-          }
-          return `${memoryValue} KB`;
-        }
-        
-        // Display naive approach results
-        const naiveTimedOut = data.results.naive.timedOut || false;
-        const naiveMemoryIssue = data.results.naive.memoryMeasurementIssue || false;
-        const naiveResult = data.results.naive.lps;
-        document.getElementById('naive-result').innerHTML = 
-            formatResultWithWarning(naiveResult, naiveTimedOut);
-        document.getElementById('naive-length').textContent = `(length: ${countNonSpaceChars(naiveResult)})`;
-        document.getElementById('naive-preview').innerHTML = createPreview(naiveResult, originalText);
-        document.getElementById('naive-time').textContent = 
-            naiveTimedOut ? "120000+ ms" : `${data.results.naive.executionTime} ms`;
-        document.getElementById('naive-memory').innerHTML = 
-            formatMemoryDisplay(data.results.naive.memoryUsage, naiveMemoryIssue);
-        
-        const naiveStart = originalText.indexOf(naiveResult);
-        if (naiveStart !== -1) {
-          document.getElementById('naive-index').textContent = 
-            `Found at position ${naiveStart} to ${naiveStart + naiveResult.length - 1}`;
-        }
-        
-        // Display DP approach results
-        const dpTimedOut = data.results.dp.timedOut || false;
-        const dpMemoryIssue = data.results.dp.memoryMeasurementIssue || false;
-        const dpResult = data.results.dp.lps;
-        document.getElementById('dp-result').innerHTML = 
-            formatResultWithWarning(dpResult, dpTimedOut);
-        document.getElementById('dp-length').textContent = `(length: ${countNonSpaceChars(dpResult)})`;
-        document.getElementById('dp-preview').innerHTML = createPreview(dpResult, originalText);
-        document.getElementById('dp-time').textContent = 
-            dpTimedOut ? "120000+ ms" : `${data.results.dp.executionTime} ms`;
-        document.getElementById('dp-memory').innerHTML = 
-            formatMemoryDisplay(data.results.dp.memoryUsage, dpMemoryIssue);
-        
-        const dpStart = originalText.indexOf(dpResult);
-        if (dpStart !== -1) {
-          document.getElementById('dp-index').textContent = 
-            `Found at position ${dpStart} to ${dpStart + dpResult.length - 1}`;
-        }
-        
-        // Display Manacher's algorithm results
-        const manacherTimedOut = data.results.manacher.timedOut || false;
-        const manacherMemoryIssue = data.results.manacher.memoryMeasurementIssue || false;
-        const manacherResult = data.results.manacher.lps;
-        document.getElementById('manacher-result').innerHTML = 
-            formatResultWithWarning(manacherResult, manacherTimedOut);
-        document.getElementById('manacher-length').textContent = `(length: ${countNonSpaceChars(manacherResult)})`;
-        document.getElementById('manacher-preview').innerHTML = createPreview(manacherResult, originalText);
-        document.getElementById('manacher-time').textContent = 
-            manacherTimedOut ? "120000+ ms" : `${data.results.manacher.executionTime} ms`;
-        document.getElementById('manacher-memory').innerHTML = 
-            formatMemoryDisplay(data.results.manacher.memoryUsage, manacherMemoryIssue);
-        
-        const manacherStart = originalText.indexOf(manacherResult);
-        if (manacherStart !== -1) {
-          document.getElementById('manacher-index').textContent = 
-            `Found at position ${manacherStart} to ${manacherStart + manacherResult.length - 1}`;
-        }
-        
-        // Add memory measurement note if any algorithm had measurement issues
-        if (naiveMemoryIssue || dpMemoryIssue || manacherMemoryIssue) {
-          // Check if note already exists
-          let noteEl = document.querySelector('.memory-measurement-note');
-          if (!noteEl) {
-            // Add note below the results section
-            noteEl = document.createElement('div');
-            noteEl.className = 'highlight-info memory-measurement-note';
-            noteEl.style.marginTop = '20px';
-            noteEl.innerHTML = `
-              <i class="fas fa-exclamation-triangle" style="color: var(--warning-color);"></i>
-              <strong>Memory Measurement Warning:</strong> Some memory measurements were affected by garbage collection during algorithm execution. 
-              Values marked with an asterisk (*) may show as negative or zero and should not be used for comparison. This is a limitation of how Node.js manages memory and does NOT affect the correctness of palindrome detection or time measurements.
-            `;
-            document.getElementById('results').appendChild(noteEl);
-          }
-        }
-        
-        // Show results
+        // Make sure results div is visible
         resultsDiv.style.display = 'block';
         
-        // Scroll to results
-        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        resultsDiv.innerHTML = '';
+        
+        // Create summary box at the top
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'summary-box';
+        summaryDiv.innerHTML = `
+          <h3>Results Summary</h3>
+          <p>Input length: ${data.fullLength.toLocaleString()} characters</p>
+          <p>Longest palindrome length: ${data.maxPalindromeLength.toLocaleString()} characters</p>
+        `;
+        resultsDiv.appendChild(summaryDiv);
+        
+        // Sort algorithms by execution time (fastest first)
+        const results = [...data.results].sort((a, b) => a.executionTime - b.executionTime);
+        
+        results.forEach(result => {
+          const card = document.createElement('div');
+          card.className = 'result-card';
+          
+          // Truncate palindrome for display (show only first 50 chars by default)
+          const palindrome = result.result;
+          const truncatedPalindrome = palindrome.length > 50 
+            ? palindrome.substring(0, 50) + '...' 
+            : palindrome;
+          
+          // Create elements with basic info
+          card.innerHTML = `
+            <h3>${algorithmNames[result.algorithm] || result.algorithm}</h3>
+            <div class="metrics">
+              <div class="metric">
+                <span class="label">Time:</span>
+                <span class="value">${result.executionTime.toFixed(2)} ms</span>
+              </div>
+              <div class="metric">
+                <span class="label">Memory:</span>
+                <span class="value">${formatMemory(result.memoryUsed)}</span>
+              </div>
+              <div class="metric">
+                <span class="label">Length:</span>
+                <span class="value">${result.result.length} chars</span>
+              </div>
+              <div class="metric">
+                <span class="label">Iterations:</span>
+                <span class="value">${result.iterations || 1}</span>
+              </div>
+            </div>
+            
+            <div class="palindrome-container">
+              <div class="palindrome-header">
+                <h4>Found Palindrome:</h4>
+                <button class="show-palindrome-btn">Show Palindrome</button>
+              </div>
+              <div class="palindrome-preview">${truncatedPalindrome}</div>
+              <div class="palindrome-full" style="display:none;">${palindrome}</div>
+            </div>
+          `;
+          
+          resultsDiv.appendChild(card);
+          
+          // Add event listener to the button
+          const showBtn = card.querySelector('.show-palindrome-btn');
+          const previewDiv = card.querySelector('.palindrome-preview');
+          const fullDiv = card.querySelector('.palindrome-full');
+          
+          showBtn.addEventListener('click', function() {
+            if (fullDiv.style.display === 'none') {
+              fullDiv.style.display = 'block';
+              previewDiv.style.display = 'none';
+              showBtn.textContent = 'Hide Palindrome';
+            } else {
+              fullDiv.style.display = 'none';
+              previewDiv.style.display = 'block';
+              showBtn.textContent = 'Show Palindrome';
+            }
+          });
+        });
       }
       
       function showError(message) {

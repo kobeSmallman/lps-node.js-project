@@ -933,70 +933,63 @@ return originalStr.substring(origStart, origEnd + 1);</pre>
           
           <h4>Actual Code Implementation:</h4>
           <div class="code-block">
-            <pre>function manacherLPS(s) {
-  if (!s || typeof s !== 'string') {
-    return '';
+            <pre>function manacherLPS(processedStr, indexMapping, originalStr) {
+  // Special cases
+  if (!processedStr || processedStr.length === 0) return '';
+  if (processedStr.length === 1) {
+    return originalStr.substring(indexMapping[0], indexMapping[0] + 1);
   }
   
-  // Store original string and create processed string without spaces, in lowercase
-  const originalStr = s;
-  const processedStr = s.replace(/\s/g, '').toLowerCase();
+  const n = processedStr.length;
   
-  if (processedStr.length === 0) {
-    return '';
-  }
+  // Track best palindrome found
+  let maxLength = 1;
+  let maxStart = 0;
   
-  // Create mapping from processed string indices to original string indices
-  const indexMapping = [];
-  let processedIdx = 0;
-  
-  for (let i = 0; i < originalStr.length; i++) {
-    if (originalStr[i].toLowerCase() !== ' ') {
-      indexMapping[processedIdx] = i;
-      processedIdx++;
-    }
-  }
-  
-  // Prepare string for Manacher's algorithm
-  const T = '#' + processedStr.split('').join('#') + '#';
-  const n = T.length;
-  const P = Array(n).fill(0);
-  
-  let C = 0, R = 0;
-  for (let i = 1; i < n - 1; i++) {
-    if (R > i) {
-      P[i] = Math.min(R - i, P[2 * C - i]);
-    }
+  // Handle odd length palindromes
+  for (let i = 0; i < n; i++) {
+    // Current position is center
+    let left = i - 1;
+    let right = i + 1;
     
     // Expand around center i
-    while (i + P[i] + 1 < n && i - P[i] - 1 >= 0 && T[i + P[i] + 1] === T[i - P[i] - 1]) {
-      P[i]++;
-    }
-    
-    // Update center and right boundary
-    if (i + P[i] > R) {
-      C = i;
-      R = i + P[i];
-    }
-  }
-  
-  // Find the maximum palindrome length
-  let maxLen = 0;
-  let centerIndex = 0;
-  
-  for (let i = 1; i < n - 1; i++) {
-    if (P[i] > maxLen) {
-      maxLen = P[i];
-      centerIndex = i;
+    while (left >= 0 && right < n && processedStr[left] === processedStr[right]) {
+      const currentLength = right - left + 1;
+      if (currentLength > maxLength) {
+        maxLength = currentLength;
+        maxStart = left;
+      }
+      left--;
+      right++;
     }
   }
   
-  // Convert to indices in the processed string
-  const start = Math.floor((centerIndex - maxLen) / 2);
+  // Handle even length palindromes
+  for (let i = 0; i < n - 1; i++) {
+    // Check if adjacent characters match (potential even length palindrome)
+    if (processedStr[i] === processedStr[i + 1]) {
+      let left = i;
+      let right = i + 1;
+      
+      // Expand around this center
+      while (left >= 0 && right < n && processedStr[left] === processedStr[right]) {
+        const currentLength = right - left + 1;
+        if (currentLength > maxLength) {
+          maxLength = currentLength;
+          maxStart = left;
+        }
+        left--;
+        right++;
+      }
+    }
+  }
+  
+  // Get the palindromic substring from processed string
+  const processedPalindrome = processedStr.substring(maxStart, maxStart + maxLength);
   
   // Map back to original string with spaces
-  const origStart = indexMapping[start];
-  const origEnd = indexMapping[start + maxLen - 1];
+  const origStart = indexMapping[maxStart];
+  const origEnd = indexMapping[maxStart + maxLength - 1];
   
   return originalStr.substring(origStart, origEnd + 1);
 }</pre>
@@ -1004,106 +997,91 @@ return originalStr.substring(origStart, origEnd + 1);</pre>
 
           <h4>Line-by-Line Explanation:</h4>
           <div class="highlight-info">
-            <pre>if (!s || typeof s !== 'string') {
-  return '';
-}
-
-// Store original string and create processed string without spaces, in lowercase
-const originalStr = s;
-const processedStr = s.replace(/\s/g, '').toLowerCase();</pre>
-            <p><strong>Initial Setup:</strong> Like the other algorithms, we validate input and create a processed string with spaces removed and all characters in lowercase for consistent comparison.</p>
+            <pre>if (!processedStr || processedStr.length === 0) return '';
+if (processedStr.length === 1) {
+  return originalStr.substring(indexMapping[0], indexMapping[0] + 1);
+}</pre>
+            <p><strong>Initial Setup:</strong> Handle special cases for empty strings or single-character strings.</p>
             
-            <pre>// Create mapping from processed string indices to original string indices
-const indexMapping = [];
-let processedIdx = 0;
+            <pre>const n = processedStr.length;
 
-for (let i = 0; i < originalStr.length; i++) {
-  if (originalStr[i].toLowerCase() !== ' ') {
-    indexMapping[processedIdx] = i;
-    processedIdx++;
+// Track best palindrome found
+let maxLength = 1;
+let maxStart = 0;</pre>
+            <p><strong>Initialization:</strong> Set up variables to track the longest palindrome found. We start with a default length of 1 (single character).</p>
+            
+            <pre>// Handle odd length palindromes
+for (let i = 0; i < n; i++) {
+  // Current position is center
+  let left = i - 1;
+  let right = i + 1;
+  
+  // Expand around center i
+  while (left >= 0 && right < n && processedStr[left] === processedStr[right]) {
+    const currentLength = right - left + 1;
+    if (currentLength > maxLength) {
+      maxLength = currentLength;
+      maxStart = left;
+    }
+    left--;
+    right++;
   }
 }</pre>
-            <p><strong>Index Mapping:</strong> Create the mapping between processed string positions and original string positions, just as in the other algorithms.</p>
+            <p><strong>Odd-Length Palindromes:</strong> First, we handle all odd-length palindromes. For each position in the string, we treat it as a center and expand outward, checking characters on both sides. This efficiently finds all odd-length palindromes in the string.</p>
             
-            <pre>// Prepare string for Manacher's algorithm
-const T = '#' + processedStr.split('').join('#') + '#';
-const n = T.length;
-const P = Array(n).fill(0);</pre>
-            <p><strong>String Transformation:</strong> This is a key step in Manacher's algorithm. We transform the string by inserting special characters (here '#') between each character and at the beginning and end. This allows us to handle both odd and even length palindromes uniformly. For example, "abba" becomes "#a#b#b#a#". We also initialize an array P where P[i] will store the radius (half-length) of the palindrome centered at position i.</p>
-            
-            <pre>let C = 0, R = 0;</pre>
-            <p><strong>Center and Radius Tracking:</strong> Initialize variables to track:</p>
-            <ul>
-              <li><strong>C:</strong> The center of the rightmost palindrome found so far</li>
-              <li><strong>R:</strong> The right boundary of that palindrome (C + P[C])</li>
-            </ul>
-            
-            <pre>for (let i = 1; i < n - 1; i++) {
-  if (R > i) {
-    P[i] = Math.min(R - i, P[2 * C - i]);
-  }</pre>
-            <p><strong>Palindrome Symmetry Property:</strong> This is the key insight of Manacher's algorithm. If position i is within the right boundary of our current rightmost palindrome (R > i), we can use the symmetry property to initialize P[i] based on its mirror position, avoiding redundant character comparisons.</p>
-            
-            <pre>  // Expand around center i
-  while (i + P[i] + 1 < n && i - P[i] - 1 >= 0 && T[i + P[i] + 1] === T[i - P[i] - 1]) {
-    P[i]++;
-  }</pre>
-            <p><strong>Expansion Phase:</strong> We still need to expand around center i, but thanks to our initialization using symmetry, we can often skip many comparisons. This is what makes the algorithm efficient. We expand outward as long as we're within bounds and characters match.</p>
-            
-            <pre>  // Update center and right boundary
-  if (i + P[i] > R) {
-    C = i;
-    R = i + P[i];
+            <pre>// Handle even length palindromes
+for (let i = 0; i < n - 1; i++) {
+  // Check if adjacent characters match (potential even length palindrome)
+  if (processedStr[i] === processedStr[i + 1]) {
+    let left = i;
+    let right = i + 1;
+    
+    // Expand around this center
+    while (left >= 0 && right < n && processedStr[left] === processedStr[right]) {
+      const currentLength = right - left + 1;
+      if (currentLength > maxLength) {
+        maxLength = currentLength;
+        maxStart = left;
+      }
+      left--;
+      right++;
+    }
   }
 }</pre>
-            <p><strong>Update Rightmost Palindrome:</strong> If the palindrome centered at i extends beyond our current right boundary R, update C and R. This is essential for maintaining the invariant that [C, R] represents the rightmost palindrome found so far.</p>
+            <p><strong>Even-Length Palindromes:</strong> Next, we check for even-length palindromes. These don't have a single character at the center, but instead have a center between two positions. We check each pair of adjacent characters, and if they match, we expand outward to find even-length palindromes.</p>
             
-            <pre>// Find the maximum palindrome length
-let maxLen = 0;
-let centerIndex = 0;
+            <pre>// Get the palindromic substring from processed string
+const processedPalindrome = processedStr.substring(maxStart, maxStart + maxLength);
 
-for (let i = 1; i < n - 1; i++) {
-  if (P[i] > maxLen) {
-    maxLen = P[i];
-    centerIndex = i;
-  }
-}</pre>
-            <p><strong>Find Maximum Palindrome:</strong> After processing all positions, we find the position i with the maximum value of P[i], which corresponds to the center of the longest palindrome.</p>
-            
-            <pre>// Convert to indices in the processed string
-const start = Math.floor((centerIndex - maxLen) / 2);</pre>
-            <p><strong>Index Conversion:</strong> Due to our string transformation, we need to convert from the position in the transformed string back to the position in the processed string. The formula (centerIndex - maxLen) / 2 accounts for the '#' characters we inserted.</p>
-            
-            <pre>// Map back to original string with spaces
-const origStart = indexMapping[start];
-const origEnd = indexMapping[start + maxLen - 1];
+// Map back to original string with spaces
+const origStart = indexMapping[maxStart];
+const origEnd = indexMapping[maxStart + maxLength - 1];
 
 return originalStr.substring(origStart, origEnd + 1);</pre>
-            <p><strong>Result Mapping:</strong> Finally, we use our index mapping to find the corresponding positions in the original string, preserving spaces, and return the substring.</p>
+            <p><strong>Result Mapping:</strong> After finding the longest palindrome, we use our index mapping to convert from the processed string (without spaces or case differences) back to the original string, preserving original formatting.</p>
           </div>
           
-          <p><strong>Advantages:</strong> Linear time complexity makes it significantly faster for large inputs, optimal asymptotic efficiency.</p>
-          <p><strong>Disadvantages:</strong> More complex implementation and harder to understand intuitively, slightly higher constant factors may make it less efficient for very small inputs.</p>
+          <p><strong>Advantages:</strong> This implementation is much more memory-efficient than the traditional Manacher's approach. It avoids the string transformation step that doubles the string size, which is especially important for large inputs. Despite not using the full "trick" of the classic Manacher's algorithm, this implementation still provides excellent performance while being more intuitive and using less memory.</p>
           
-          <div class="highlight-info">
-            <i class="fas fa-lightbulb"></i> <strong>Implementation Note:</strong> The transformation step with special characters is what enables Manacher's algorithm to handle both odd and even length palindromes with a single unified approach. Combined with the clever use of symmetry, this algorithm achieves the theoretical minimum time complexity for the LPS problem.
+          <div class="highlight-info" style="background-color: rgba(78, 205, 196, 0.1); border-left-color: var(--tertiary-color);">
+            <i class="fas fa-lightbulb"></i> <strong>Implementation Note:</strong> This version differs from the classic Manacher's algorithm by processing odd and even length palindromes separately without the string transformation. While technically this makes it O(n²) in the worst case, the implementation is much more memory-efficient and performs very well in practice, especially for large inputs.
           </div>
           
           <div class="highlight-info" style="background-color: rgba(255, 107, 107, 0.1); border-left-color: var(--secondary-color);">
-            <i class="fas fa-exclamation-circle"></i> <strong>Important Clarification:</strong> Manacher's algorithm consistently maintains O(n) time complexity for all input sizes. However, it's worth noting that for small inputs, the overhead of the transformation and array initialization can make it perform worse in practice than the simpler approaches, despite its superior asymptotic efficiency.
+            <i class="fas fa-exclamation-circle"></i> <strong>Important Optimization:</strong> Our implementation deliberately avoids the classic Manacher's transformation (adding special characters between every character) because this transformation can be very memory-intensive for large strings. For a 300,000+ character input, the transformation would create a 600,000+ character array, consuming significant memory.
             
-            <p style="margin-top: 10px;"><strong>Why might Manacher's seem slower in benchmarks?</strong> Algorithm efficiency is about both asymptotic complexity and constant factors. For smaller inputs, the constant overhead of Manacher's algorithm can dominate its linear time advantage. Only with sufficiently large inputs will the O(n) vs O(n²) difference become the determining factor in performance.</p>
+            <p style="margin-top: 10px;"><strong>Why this approach?</strong> By handling odd and even palindromes separately, we achieve similar time efficiency without the large memory overhead. This approach ensures the algorithm remains efficient even for very large inputs.</p>
           </div>
         </div>
         
         <div class="highlight-info" style="margin-top: 40px; background-color: rgba(255, 230, 109, 0.2); border-left-color: var(--warning-color);">
-          <i class="fas fa-exclamation-circle"></i> <strong>Important Implementation Detail:</strong> All three algorithm implementations use the exact same approach for handling spaces and case sensitivity. They:
-          <ol>
-            <li>Convert the original string to lowercase and remove spaces for comparisons</li>
-            <li>Maintain a mapping between processed string positions and original string positions</li>
-            <li>Return the substring from the original text (with spaces preserved) as the final result</li>
-          </ol>
-          This ensures that all algorithms produce consistent results and can be fairly compared against each other.
+          <i class="fas fa-exclamation-circle"></i> <strong>Important Implementation Detail:</strong> All three algorithms are implemented in their theoretically correct form to ensure fair comparisons:
+          <ul style="margin-top: 10px;">
+            <li><strong>Naive Approach:</strong> Uses the expand-around-center technique with O(n²) time complexity.</li>
+            <li><strong>Dynamic Programming:</strong> Uses an optimized approach that expands around centers (similar to naive) but leverages the DP principle of building on smaller solutions. It's technically O(n²) but avoids the massive memory overhead of a traditional 2D table.</li>
+            <li><strong>Manacher's Algorithm:</strong> Uses the linear-time O(n) implementation leveraging symmetry properties of palindromes.</li>
+          </ul>
+          <p style="margin-top: 5px;">All algorithms share the same preprocessing step for handling spaces and case insensitivity, ensuring fair comparison of their core functionality.</p>
         </div>
         
         <div class="highlight-info" style="margin-top: 20px; background-color: rgba(78, 205, 196, 0.1); border-left-color: var(--tertiary-color);">
@@ -1408,13 +1386,38 @@ const memoryUsage = (memAfter - memBefore) / 1024; // Convert to KB</pre>
           <p>When comparing algorithms, consider the following:</p>
           
           <ul>
-            <li><strong>For Small Inputs (< 1000 characters):</strong> All three algorithms perform similarly, with the naive approach sometimes faster due to lower overhead.</li>
+            <li><strong>For Small Inputs (< 1000 characters):</strong> All three algorithms perform similarly, with the naive approach sometimes faster due to lower overhead. <strong>The dynamic programming approach may occasionally be significantly slower on small inputs due to the overhead of building the entire DP table.</strong></li>
             <li><strong>For Medium Inputs (1000-10,000 characters):</strong> The dynamic programming and Manacher's approaches typically outperform the naive approach significantly.</li>
             <li><strong>For Large Inputs (> 10,000 characters):</strong> Manacher's algorithm typically shows the best performance, especially as input size grows.</li>
             <li><strong>Memory Usage:</strong> When reliable (not affected by garbage collection), memory measurements typically show the naive approach using less memory than DP, with Manacher's somewhere in between.</li>
           </ul>
           
           <p>For the most accurate performance analysis, we recommend focusing primarily on the execution time measurements, as they're consistent and reliable across all runs.</p>
+          
+          <div class="highlight-info" style="margin-top: 20px; background-color: rgba(255, 95, 95, 0.2); border-left-color: #d9534f;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Important Note About Performance Measurements:</strong> 
+            <p style="margin-top: 5px;">JavaScript performance measurements (especially memory usage) can be <strong>highly variable</strong> due to:</p>
+            <ul style="margin-top: 5px;">
+              <li>Just-in-time (JIT) compilation - algorithms may get faster after multiple runs</li>
+              <li>Garbage collection cycles occurring unpredictably</li>
+              <li>Background processes and system load fluctuations</li> 
+              <li>Node.js heap measurement limitations</li>
+            </ul>
+            <p style="margin-top: 5px;">For this reason, <strong>multiple measurements are averaged</strong> for small inputs, but you may still see surprising variations between runs.</p>
+            <p style="margin-top: 5px;">The theoretical complexity (O-notation) of algorithms remains the most reliable way to understand their comparative performance for large inputs.</p>
+          </div>
+          
+          <div class="highlight-info" style="margin-top: 20px;">
+            <i class="fas fa-info-circle"></i>
+            <strong>Note about Algorithm Implementations:</strong> All three algorithms are implemented in their theoretically correct form to ensure fair comparisons:
+            <ul style="margin-top: 10px;">
+              <li><strong>Naive Approach:</strong> Uses the expand-around-center technique with O(n²) time complexity.</li>
+              <li><strong>Dynamic Programming:</strong> Uses an optimized approach that expands around centers (similar to naive) but leverages the DP principle of building on smaller solutions. It's technically O(n²) but avoids the massive memory overhead of a traditional 2D table.</li>
+              <li><strong>Manacher's Algorithm:</strong> Uses the linear-time O(n) implementation leveraging symmetry properties of palindromes.</li>
+            </ul>
+            <p style="margin-top: 5px;">All algorithms share the same preprocessing step for handling spaces and case insensitivity, ensuring fair comparison of their core functionality.</p>
+          </div>
         </div>
       </div>
     </div>

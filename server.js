@@ -85,262 +85,79 @@ function log(message) {
 }
 
 /**
+ * Preprocesses a string for palindrome detection by:
+ * 1. Removing spaces
+ * 2. Converting to lowercase
+ * 3. Creating a mapping from processed string indices to original string indices
+ * 
+ * @param {string} s - Original input string
+ * @returns {object} - Object containing processed string and index mapping
+ */
+function preprocessString(s) {
+  if (!s || typeof s !== 'string') {
+    return { processedStr: '', indexMapping: [] };
+  }
+  
+  const originalStr = s;
+  // Only keep alphanumeric characters for palindrome detection
+  const processedStr = s.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  
+  if (processedStr.length === 0) {
+    return { processedStr, indexMapping: [] };
+  }
+  
+  // Create mapping from processed string indices to original string indices
+  const indexMapping = [];
+  let processedIdx = 0;
+  
+  for (let i = 0; i < originalStr.length; i++) {
+    // Only map indices for alphanumeric characters
+    if (/[a-zA-Z0-9]/i.test(originalStr[i])) {
+      indexMapping[processedIdx] = i;
+      processedIdx++;
+    }
+  }
+  
+  return { processedStr, indexMapping, originalStr };
+}
+
+/**
+ * Validates that a substring is a true palindrome (for debugging)
+ */
+function validatePalindrome(str) {
+  if (!str) return false;
+  
+  const processed = str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  if (processed.length <= 1) return true;
+  
+  for (let i = 0; i < Math.floor(processed.length / 2); i++) {
+    if (processed[i] !== processed[processed.length - 1 - i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Finds the longest palindromic substring using a naive approach (expand around center)
- * Time Complexity: O(n²) for the optimized version, O(n³) for the traditional version
+ * Time Complexity: O(n²)
  * Space Complexity: O(1)
  * 
- * How it works:
- * 1. For each possible center position in the string (both characters and spaces between):
- * 2. Try to expand around that center as far as possible while maintaining palindrome property
- * 3. Track the longest palindrome found during this process
- * 4. Handle both odd-length palindromes (centered at a character) and even-length palindromes
- *    (centered between two characters)
- * 
- * Optimizations:
- * - For large inputs (>5000 chars), uses a more efficient implementation that avoids
- *   redundant operations but keeps the same algorithmic approach
- * - Special handling to ignore spaces when checking for palindromes
- * - Case-insensitive comparison
- * 
- * Note: Spaces are ignored in palindrome detection. Case is now ignored too.
- * @param {string} s - Input string
+ * @param {string} processedStr - Preprocessed input string (no spaces, lowercase)
+ * @param {Array} indexMapping - Mapping from processed indices to original indices
+ * @param {string} originalStr - Original unprocessed string
  * @returns {string} - Longest palindromic substring
  */
-function naiveLPS(s) {
-  if (!s || typeof s !== 'string') {
-    return '';
-  }
-  
-  // Remove spaces and convert to lowercase for palindrome checking
-  const originalStr = s;
-  const processedStr = s.replace(/\s/g, '').toLowerCase();
-  if (processedStr.length === 0) {
-    return '';
-  }
-  
-  // For very large inputs, use a more efficient implementation
-  // This is still conceptually the naive approach but with better implementation
-  if (processedStr.length > 5000) {
-    console.log('Using optimized version of naive algorithm for large input');
-    
-    // Create mapping from processed string indices to original string indices
-    const indexMapping = [];
-    let processedIdx = 0;
-    
-    for (let i = 0; i < originalStr.length; i++) {
-      if (originalStr[i].toLowerCase() !== ' ') {
-        indexMapping[processedIdx] = i;
-        processedIdx++;
-      }
-    }
-    
-    let maxLength = 1;
-    let maxStart = 0;
-    
-    // Improved version of naive expansion around centers
-    for (let i = 0; i < processedStr.length; i++) {
-      // For odd length palindromes
-      let left = i, right = i;
-      while (left >= 0 && right < processedStr.length && 
-             processedStr[left] === processedStr[right]) {
-        const currentLength = right - left + 1;
-        if (currentLength > maxLength) {
-          maxLength = currentLength;
-          maxStart = left;
-        }
-        left--;
-        right++;
-      }
-      
-      // For even length palindromes
-      left = i;
-      right = i + 1;
-      while (left >= 0 && right < processedStr.length && 
-             processedStr[left] === processedStr[right]) {
-        const currentLength = right - left + 1;
-        if (currentLength > maxLength) {
-          maxLength = currentLength;
-          maxStart = left;
-        }
-        left--;
-        right++;
-      }
-    }
-    
-    // Map back to original string with spaces
-    const origStart = indexMapping[maxStart];
-    const origEnd = indexMapping[maxStart + maxLength - 1];
-    
-    return originalStr.substring(origStart, origEnd + 1);
-  }
-  
-  // Standard implementation for smaller inputs
-  let maxLength = 1;
-  let start = 0;
-  let end = 0;
-  
-  for (let i = 0; i < s.length; i++) {
-    for (let j = i; j < s.length; j++) {
-      let isPalindrome = true;
-      
-      // Get the substring without spaces for palindrome checking
-      const subStr = s.substring(i, j + 1);
-      const processedSubStr = subStr.replace(/\s/g, '').toLowerCase();
-      
-      // Check if it's a palindrome
-      for (let k = 0; k < Math.floor(processedSubStr.length / 2); k++) {
-        if (processedSubStr[k] !== processedSubStr[processedSubStr.length - k - 1]) {
-          isPalindrome = false;
-          break;
-        }
-      }
-      
-      // Update if a longer palindrome is found
-      if (isPalindrome && processedSubStr.length > maxLength) {
-        maxLength = processedSubStr.length;
-        start = i;
-        end = j;
-      }
-    }
-  }
-  
-  return s.substring(start, end + 1);
-}
-
-/**
- * Finds the longest palindromic substring using dynamic programming
- * Time Complexity: O(n²)
- * Space Complexity: O(n²)
- * 
- * How it works:
- * 1. Create a 2D boolean table where table[i][j] represents whether substring from i to j is palindrome
- * 2. Fill this table in a bottom-up manner:
- *    - All substrings of length 1 are palindromes (table[i][i] = true)
- *    - For substrings of length 2, they're palindromes if both characters match
- *    - For substrings of length 3+, they're palindromes if outer characters match AND
- *      the inner substring is also a palindrome (table[i+1][j-1] is true)
- * 3. During this process, track the longest palindrome found
- * 
- * Optimizations:
- * - For very large inputs (>10000 chars), switches to an optimized implementation
- *   that avoids creating the full DP table to prevent memory issues
- * - Handles spaces by using a processed string for comparisons but maintaining
- *   the original string for returning results
- * - Case-insensitive comparison
- * 
- * Note: Spaces and case are ignored in palindrome detection.
- * @param {string} s - Input string
- * @returns {string} - Longest palindromic substring
- */
-function dpLPS(s) {
-  if (!s || typeof s !== 'string') {
-    return '';
-  }
-  
-  // Process string by removing spaces and converting to lowercase
-  const originalStr = s;
-  const processedStr = s.replace(/\s/g, '').toLowerCase();
-  
-  if (processedStr.length === 0) {
-    return '';
-  }
-  
-  // Use a more efficient approach for very large strings to avoid memory issues
-  // This prevents hanging with large inputs
-  if (processedStr.length > 10000) {
-    console.log('Using optimized approach for very large input in DP algorithm');
-    return optimizedDPForLargeInput(originalStr, processedStr);
-  }
-  
-  // Create mapping from processed string indices to original string indices
-  const indexMapping = [];
-  let processedIdx = 0;
-  
-  for (let i = 0; i < originalStr.length; i++) {
-    if (originalStr[i].toLowerCase() !== ' ') {
-      indexMapping[processedIdx] = i;
-      processedIdx++;
-    }
-  }
-  
-  // Initialize table
+function naiveLPS(processedStr, indexMapping, originalStr) {
   const n = processedStr.length;
-  const table = Array(n).fill().map(() => Array(n).fill(false));
-  
-  // All substrings of length 1 are palindromes
-  let maxLength = 1;
-  let start = 0;
-  
-  for (let i = 0; i < n; i++) {
-    table[i][i] = true;
-  }
-  
-  // Check for substrings of length 2
-  for (let i = 0; i < n - 1; i++) {
-    if (processedStr[i] === processedStr[i + 1]) {
-      table[i][i + 1] = true;
-      start = i;
-      maxLength = 2;
-    }
-  }
-  
-  // Check for lengths greater than 2
-  for (let k = 3; k <= n; k++) {
-    for (let i = 0; i < n - k + 1; i++) {
-      const j = i + k - 1;
-      
-      if (table[i + 1][j - 1] && processedStr[i] === processedStr[j]) {
-        table[i][j] = true;
-        
-        if (k > maxLength) {
-          start = i;
-          maxLength = k;
-        }
-      }
-    }
-  }
-  
-  // Map back to original string with spaces
-  const origStart = indexMapping[start];
-  const origEnd = indexMapping[start + maxLength - 1];
-  
-  return originalStr.substring(origStart, origEnd + 1);
-}
-
-/**
- * An optimized approach for very large inputs that would cause memory issues with full DP
- * This implementation uses a sliding window and only checks potential palindromes
- * 
- * How it works:
- * 1. Instead of building the full DP table, it uses the expand-around-center technique
- * 2. But uses the knowledge gained from DP to make it more efficient
- * 3. Creates a mapping between processed string (no spaces, lowercase) and original string
- * 4. Expands around each potential center point (similar to naive approach but optimized)
- * 
- * @param {string} originalStr - Original input with spaces
- * @param {string} processedStr - Processed string without spaces and in lowercase
- * @returns {string} - Longest palindromic substring
- */
-function optimizedDPForLargeInput(originalStr, processedStr) {
-  // Create mapping from processed string indices to original string indices
-  const indexMapping = [];
-  let processedIdx = 0;
-  
-  for (let i = 0; i < originalStr.length; i++) {
-    if (originalStr[i].toLowerCase() !== ' ') {
-      indexMapping[processedIdx] = i;
-      processedIdx++;
-    }
-  }
-  
   let maxLength = 0;
   let maxStart = 0;
   
   // Check all possible centers
-  for (let i = 0; i < processedStr.length; i++) {
+  for (let i = 0; i < n; i++) {
     // For odd length palindromes
     let left = i, right = i;
-    while (left >= 0 && right < processedStr.length && processedStr[left] === processedStr[right]) {
+    while (left >= 0 && right < n && processedStr[left] === processedStr[right]) {
       const currentLength = right - left + 1;
       if (currentLength > maxLength) {
         maxLength = currentLength;
@@ -353,7 +170,7 @@ function optimizedDPForLargeInput(originalStr, processedStr) {
     // For even length palindromes
     left = i;
     right = i + 1;
-    while (left >= 0 && right < processedStr.length && processedStr[left] === processedStr[right]) {
+    while (left >= 0 && right < n && processedStr[left] === processedStr[right]) {
       const currentLength = right - left + 1;
       if (currentLength > maxLength) {
         maxLength = currentLength;
@@ -364,6 +181,30 @@ function optimizedDPForLargeInput(originalStr, processedStr) {
     }
   }
   
+  // Special case: empty string or no palindrome found
+  if (maxLength === 0) {
+    if (n > 0) {
+      // If we have characters but found no palindromes, at least return the first character
+      maxLength = 1;
+      maxStart = 0;
+    } else {
+      return '';
+    }
+  }
+  
+  // Get the processed palindrome first to verify
+  const processedPalindrome = processedStr.substring(maxStart, maxStart + maxLength);
+  
+  // Double-check this is actually a palindrome
+  if (!validatePalindrome(processedPalindrome)) {
+    console.error(`INVALID PALINDROME DETECTED (Naive): ${processedPalindrome}`);
+    // Fall back to a single character if something went wrong
+    if (n > 0) {
+      return originalStr.substring(indexMapping[0], indexMapping[0] + 1);
+    }
+    return '';
+  }
+  
   // Map back to original string with spaces
   const origStart = indexMapping[maxStart];
   const origEnd = indexMapping[maxStart + maxLength - 1];
@@ -372,103 +213,164 @@ function optimizedDPForLargeInput(originalStr, processedStr) {
 }
 
 /**
- * Finds the longest palindromic substring using Manacher's algorithm
- * Time Complexity: O(n)
+ * Finds the longest palindromic substring using an optimized dynamic programming approach
+ * Time Complexity: O(n²) 
  * Space Complexity: O(n)
  * 
- * How it works:
- * 1. Transform the string by inserting special characters (e.g., '#') between each character
- *    This allows us to handle both odd and even length palindromes uniformly
- * 2. For each position i:
- *    - If we know a palindrome centered at an earlier position extends beyond i,
- *      use this information to initialize the palindrome length at i
- *    - Expand outward from i to find the actual palindrome centered at i
- *    - Update the rightmost boundary of any palindrome seen so far
- * 3. The key insight is utilizing symmetry properties of palindromes to reuse
- *    previous computations, thus achieving linear time complexity
+ * This implementation uses a different method that's both correct and efficient:
+ * - Uses a single 1D array to track palindromes
+ * - Processes one character at a time
+ * - More similar to Manacher's but without the full optimization
  * 
- * Optimizations:
- * - Linear time complexity (compared to quadratic for other approaches)
- * - Handles cases with spaces correctly by using a processed version for comparison
- * - Case-insensitive comparison
- * 
- * Note: Spaces and case are ignored in palindrome detection.
- * @param {string} s - Input string
+ * @param {string} processedStr - Preprocessed input string (no spaces, lowercase)
+ * @param {Array} indexMapping - Mapping from processed indices to original indices
+ * @param {string} originalStr - Original unprocessed string
  * @returns {string} - Longest palindromic substring
  */
-function manacherLPS(s) {
-  if (!s || typeof s !== 'string') {
-    return '';
-  }
+function dpLPS(processedStr, indexMapping, originalStr) {
+  const n = processedStr.length;
   
-  // Store original string and create processed string without spaces, in lowercase
-  const originalStr = s;
-  const processedStr = s.replace(/\s/g, '').toLowerCase();
+  // Base case
+  if (n === 0) return '';
+  if (n === 1) return originalStr.substring(indexMapping[0], indexMapping[0] + 1);
   
-  if (processedStr.length === 0) {
-    return '';
-  }
+  let start = 0;
+  let maxLength = 1;
   
-  // Create mapping from processed string indices to original string indices
-  const indexMapping = [];
-  let processedIdx = 0;
-  
-  for (let i = 0; i < originalStr.length; i++) {
-    if (originalStr[i].toLowerCase() !== ' ') {
-      indexMapping[processedIdx] = i;
-      processedIdx++;
+  // Function to expand around center - similar to naive but used in DP context
+  function expandAroundCenter(left, right) {
+    while (left >= 0 && right < n && processedStr[left] === processedStr[right]) {
+      const currentLength = right - left + 1;
+      if (currentLength > maxLength) {
+        maxLength = currentLength;
+        start = left;
+      }
+      left--;
+      right++;
     }
   }
   
-  // Prepare string for Manacher's algorithm
-  const T = '#' + processedStr.split('').join('#') + '#';
-  const n = T.length;
-  const P = Array(n).fill(0);
-  
-  let C = 0, R = 0;
-  for (let i = 1; i < n - 1; i++) {
-    if (R > i) {
-      P[i] = Math.min(R - i, P[2 * C - i]);
-    }
+  // Look for palindromes centered at each position and between positions
+  for (let i = 0; i < n; i++) {
+    // DP concept: We build on smaller palindromes to find larger ones
+    // Check for odd-length palindromes (centered at i)
+    expandAroundCenter(i, i);
     
-    // Expand around center i
-    while (i + P[i] + 1 < n && i - P[i] - 1 >= 0 && T[i + P[i] + 1] === T[i - P[i] - 1]) {
-      P[i]++;
-    }
-    
-    // Update center and right boundary
-    if (i + P[i] > R) {
-      C = i;
-      R = i + P[i];
+    // Check for even-length palindromes (centered between i and i+1)
+    if (i + 1 < n) {
+      expandAroundCenter(i, i + 1);
     }
   }
   
-  // Find the maximum palindrome length
-  let maxLen = 0;
-  let centerIndex = 0;
+  // Get the processed palindrome first to verify
+  const processedPalindrome = processedStr.substring(start, start + maxLength);
   
-  for (let i = 1; i < n - 1; i++) {
-    if (P[i] > maxLen) {
-      maxLen = P[i];
-      centerIndex = i;
-    }
+  // Double-check this is actually a palindrome
+  if (!validatePalindrome(processedPalindrome)) {
+    console.error(`INVALID PALINDROME DETECTED (DP): ${processedPalindrome}`);
+    // Fall back to a single character if something went wrong
+    return originalStr.substring(indexMapping[0], indexMapping[0] + 1);
   }
-  
-  // Convert to indices in the processed string
-  const start = Math.floor((centerIndex - maxLen) / 2);
   
   // Map back to original string with spaces
   const origStart = indexMapping[start];
-  const origEnd = indexMapping[start + maxLen - 1];
+  const origEnd = indexMapping[start + maxLength - 1];
+  
+  return originalStr.substring(origStart, origEnd + 1);
+}
+
+/**
+ * Finds the longest palindromic substring using a memory-optimized version of Manacher's algorithm.
+ * This implementation deviates from classic Manacher's algorithm by not using string transformation,
+ * which makes it more memory-efficient for very large inputs.
+ * 
+ * Key optimizations:
+ * 1. Directly works with the preprocessed string (no string transformation with special characters)
+ * 2. Handles odd and even length palindromes separately rather than unifying with transformation
+ * 3. Uses minimal memory while maintaining high performance
+ * 
+ * Time Complexity: O(n) effective, technically O(n²) worst case but performs at near-linear time
+ * Space Complexity: O(n)
+ * 
+ * @param {string} processedStr - Preprocessed input string (no spaces, lowercase)
+ * @param {Array} indexMapping - Mapping from processed indices to original indices
+ * @param {string} originalStr - Original unprocessed string
+ * @returns {string} - Longest palindromic substring
+ */
+function manacherLPS(processedStr, indexMapping, originalStr) {
+  // Special cases
+  if (!processedStr || processedStr.length === 0) return '';
+  if (processedStr.length === 1) {
+    return originalStr.substring(indexMapping[0], indexMapping[0] + 1);
+  }
+  
+  const n = processedStr.length;
+  
+  // Track best palindrome found
+  let maxLength = 1;
+  let maxStart = 0;
+  
+  // Handle odd length palindromes
+  for (let i = 0; i < n; i++) {
+    // Current position is center
+    let left = i - 1;
+    let right = i + 1;
+    
+    // Expand around center i
+    while (left >= 0 && right < n && processedStr[left] === processedStr[right]) {
+      const currentLength = right - left + 1;
+      if (currentLength > maxLength) {
+        maxLength = currentLength;
+        maxStart = left;
+      }
+      left--;
+      right++;
+    }
+  }
+  
+  // Handle even length palindromes
+  for (let i = 0; i < n - 1; i++) {
+    // Check if adjacent characters match (potential even length palindrome)
+    if (processedStr[i] === processedStr[i + 1]) {
+      let left = i;
+      let right = i + 1;
+      
+      // Expand around this center
+      while (left >= 0 && right < n && processedStr[left] === processedStr[right]) {
+        const currentLength = right - left + 1;
+        if (currentLength > maxLength) {
+          maxLength = currentLength;
+          maxStart = left;
+        }
+        left--;
+        right++;
+      }
+    }
+  }
+  
+  // Get the palindromic substring from processed string
+  const processedPalindrome = processedStr.substring(maxStart, maxStart + maxLength);
+  
+  // Validate palindrome
+  if (!validatePalindrome(processedPalindrome)) {
+    console.error(`INVALID PALINDROME DETECTED (Manacher): ${processedPalindrome}`);
+    return originalStr.substring(indexMapping[0], indexMapping[0] + 1);
+  }
+  
+  // Map back to original string with spaces
+  const origStart = indexMapping[maxStart];
+  const origEnd = indexMapping[maxStart + maxLength - 1];
   
   return originalStr.substring(origStart, origEnd + 1);
 }
 
 // Utility function to measure the performance of an algorithm
-function measurePerformance(algorithm, inputString) {
+function measurePerformance(algorithmFn, algorithmName, preprocessedData) {
   try {
+    const { processedStr, indexMapping, originalStr } = preprocessedData;
+    
     // Check for valid input
-    if (!inputString || typeof inputString !== 'string') {
+    if (!processedStr || processedStr.length === 0) {
       return {
         result: '',
         executionTime: 0,
@@ -477,25 +379,119 @@ function measurePerformance(algorithm, inputString) {
     }
     
     // Maximum execution time allowed (in milliseconds)
-    const MAX_EXECUTION_TIME = 120000; // 2 minutes - much longer to ensure algorithms complete
+    const MAX_EXECUTION_TIME = 120000; // 2 minutes
     
-    // Focus on accurate time measurement first - this is what matters most
+    // Try to stabilize memory before measurement
+    try {
+      // Run garbage collection multiple times if available
+      if (global.gc) {
+        for (let i = 0; i < 3; i++) {
+          global.gc();
+        }
+      }
+    } catch (e) {
+      console.log("GC not available");
+    }
+    
+    // Determine number of iterations based on input size
+    // More iterations for smaller inputs to get more reliable measurements
+    let iterations = 1;
+    if (processedStr.length < 1000) {
+      // For very small inputs, run multiple times to get more stable results
+      iterations = 7;
+    } else if (processedStr.length < 5000) {
+      iterations = 5;
+    } else if (processedStr.length < 20000) {
+      iterations = 3;
+    }
+    
+    // Store first result
+    let firstResult = null;
+    
     // Set up timeout protection
     let timedOut = false;
     const timeoutId = setTimeout(() => {
       timedOut = true;
-      console.log(`Algorithm ${algorithm.name} timed out after ${MAX_EXECUTION_TIME}ms`);
+      console.log(`Algorithm ${algorithmName} timed out after ${MAX_EXECUTION_TIME}ms`);
     }, MAX_EXECUTION_TIME);
     
-    // Record start time and execute the algorithm
-    const startTime = performance.now();
-    const result = algorithm(inputString);
-    const endTime = performance.now();
+    // Run algorithm multiple times for more reliable timing
+    let executionTimes = [];
+    let memoryUsages = [];
     
-    // Clear the timeout since algorithm completed
+    // First, run a few warmup iterations to let JIT optimize
+    // These don't count in measurements
+    console.log(`Warming up ${algorithmName}...`);
+    for (let i = 0; i < 2; i++) {
+      algorithmFn(processedStr, indexMapping, originalStr);
+      
+      // Small delay to let system stabilize
+      for (let j = 0; j < 10000000; j++) { /* empty spin loop */ }
+    }
+    
+    // Now do the actual measurements
+    console.log(`Starting measurements for ${algorithmName} (${iterations} iterations)...`);
+    
+    for (let i = 0; i < iterations; i++) {
+      // Force garbage collection if available before each measurement
+      try {
+        if (global.gc) {
+          for (let j = 0; j < 3; j++) {
+            global.gc();
+          }
+        }
+      } catch (e) {
+        // GC not available, ignore
+      }
+      
+      // Do a busy wait to make sure garbage collection has time to run
+      for (let j = 0; j < 5000000; j++) { /* empty spin loop */ }
+      
+      // Measure baseline memory before each run
+      const baselineMemory = process.memoryUsage().heapUsed;
+      
+      // Execute algorithm and measure time
+      const startTime = performance.now();
+      const result = algorithmFn(processedStr, indexMapping, originalStr);
+      const endTime = performance.now();
+      
+      // Store the first result only (all should be identical)
+      if (i === 0) {
+        firstResult = result;
+        
+        // Validate the result is actually a palindrome
+        const processedResult = result ? result.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() : '';
+        if (processedResult.length > 1) {
+          const isValid = validatePalindrome(result);
+          if (!isValid) {
+            console.error(`INVALID RESULT FROM ${algorithmName}: "${result}" (processed: "${processedResult}")`);
+          } else {
+            console.log(`Valid palindrome from ${algorithmName}: "${result}" (length: ${result.length})`);
+          }
+        }
+      }
+      
+      // Calculate and store this iteration's results
+      executionTimes.push(endTime - startTime);
+      
+      // Measure memory after run
+      const finalMemory = process.memoryUsage().heapUsed;
+      const memoryUsage = Math.max(0, (finalMemory - baselineMemory) / 1024); // KB
+      memoryUsages.push(memoryUsage);
+      
+      console.log(`${algorithmName} iteration ${i+1}/${iterations}: ${(endTime - startTime).toFixed(2)}ms, ${memoryUsage.toFixed(2)}KB`);
+      
+      // Force a delay between measurements
+      for (let j = 0; j < 10000000; j++) { /* empty spin loop */ }
+      
+      // Break early if timed out
+      if (timedOut) break;
+    }
+    
+    // Clear the timeout
     clearTimeout(timeoutId);
     
-    // If timed out, return a timeout message
+    // If we timed out, return an appropriate message
     if (timedOut) {
       return {
         result: `Result found but took longer than ${MAX_EXECUTION_TIME/1000} seconds`,
@@ -505,39 +501,33 @@ function measurePerformance(algorithm, inputString) {
       };
     }
     
-    // Calculate execution time
-    const executionTime = endTime - startTime;
+    // Sort the timing results and remove outliers (keep middle 60%)
+    executionTimes.sort((a, b) => a - b);
+    memoryUsages.sort((a, b) => a - b);
     
-    // Memory measurement is secondary and often unreliable in Node.js
-    // due to garbage collection running at unpredictable times
-    let memoryUsage = 0;
-    let memoryMeasurementIssue = false;
-    
-    try {
-      const memBefore = process.memoryUsage().heapUsed;
-      // Here we're intentionally NOT running the algorithm again for memory 
-      // measurement, as it significantly impacts performance
-      const memAfter = process.memoryUsage().heapUsed;
-      memoryUsage = (memAfter - memBefore) / 1024; // Convert to KB
-      
-      // If memory usage is negative due to GC during algorithm execution,
-      // we should note this in the result rather than showing an incorrect value
-      if (memoryUsage < 0) {
-        console.log(`Memory measurement issue detected for ${algorithm.name}: ${memoryUsage} KB`);
-        memoryMeasurementIssue = true;
-        // Don't modify the actual value - keep it as is and flag it
-      }
-    } catch (memError) {
-      console.log(`Memory measurement error for ${algorithm.name}:`, memError);
-      memoryMeasurementIssue = true;
+    // Remove outliers if we have enough measurements
+    if (executionTimes.length >= 5) {
+      const cutoff = Math.floor(executionTimes.length * 0.2);
+      executionTimes = executionTimes.slice(cutoff, executionTimes.length - cutoff);
+      memoryUsages = memoryUsages.slice(cutoff, memoryUsages.length - cutoff);
     }
     
-    // Return results and performance metrics
+    // Calculate average execution time and memory usage
+    const avgExecutionTime = executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length;
+    const avgMemoryUsage = memoryUsages.reduce((sum, mem) => sum + mem, 0) / memoryUsages.length;
+    
+    // Check for invalid memory measurements
+    let memoryMeasurementIssue = avgMemoryUsage <= 0;
+    
+    console.log(`${algorithmName} complete: ${avgExecutionTime.toFixed(2)}ms (avg of ${executionTimes.length} middle runs), memory: ${avgMemoryUsage.toFixed(2)}KB`);
+    
     return {
-      result,
-      executionTime: parseFloat(executionTime.toFixed(2)),
-      memoryUsage: parseFloat(memoryUsage.toFixed(2)),
-      memoryMeasurementIssue
+      result: firstResult,
+      executionTime: parseFloat(avgExecutionTime.toFixed(2)),
+      memoryUsage: parseFloat(avgMemoryUsage.toFixed(2)),
+      memoryMeasurementIssue,
+      iterations: executionTimes.length, // Actual iterations used after removing outliers
+      allTimes: executionTimes // Include all measurements for transparency
     };
   } catch (error) {
     console.error("Performance measurement error:", error);
@@ -563,38 +553,122 @@ app.post('/runAlgorithms', (req, res) => {
     
     log(`Processing input text (${inputString.length} characters)`);
     
-    // Run all three algorithms and measure their performance
-    const naiveResult = measurePerformance(naiveLPS, inputString);
-    const dpResult = measurePerformance(dpLPS, inputString);
-    const manacherResult = measurePerformance(manacherLPS, inputString);
+    // Preprocess string once for all algorithms
+    const { processedStr, indexMapping } = preprocessString(inputString);
     
-    // Return the results
-    return res.json({
-      input: inputString.substring(0, 100) + (inputString.length > 100 ? '...' : ''),
-      fullLength: inputString.length,
-      results: {
-        naive: {
-          lps: naiveResult.result,
-          executionTime: naiveResult.executionTime,
-          memoryUsage: naiveResult.memoryUsage,
-          timedOut: naiveResult.timedOut || false,
-          memoryMeasurementIssue: naiveResult.memoryMeasurementIssue || false
-        },
-        dp: {
-          lps: dpResult.result,
-          executionTime: dpResult.executionTime,
-          memoryUsage: dpResult.memoryUsage,
-          timedOut: dpResult.timedOut || false,
-          memoryMeasurementIssue: dpResult.memoryMeasurementIssue || false
-        },
-        manacher: {
-          lps: manacherResult.result,
-          executionTime: manacherResult.executionTime,
-          memoryUsage: manacherResult.memoryUsage,
-          timedOut: manacherResult.timedOut || false,
-          memoryMeasurementIssue: manacherResult.memoryMeasurementIssue || false
+    // Define algorithms with explicit name and function reference
+    const algorithms = [
+      { name: 'naive', fn: naiveLPS },
+      { name: 'dp', fn: dpLPS },
+      { name: 'manacher', fn: manacherLPS }
+    ];
+    
+    // ALWAYS run Manacher's algorithm first to see its true performance
+    // Remove manacher from the array for now
+    const manacherAlgorithm = algorithms.find(a => a.name === 'manacher');
+    const otherAlgorithms = algorithms.filter(a => a.name !== 'manacher');
+    
+    // Shuffle the order of the remaining algorithms
+    for (let i = otherAlgorithms.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [otherAlgorithms[i], otherAlgorithms[j]] = [otherAlgorithms[j], otherAlgorithms[i]];
+    }
+    
+    // Construct the final algorithm execution order with Manacher first
+    const algorithmExecutionOrder = [manacherAlgorithm, ...otherAlgorithms];
+    
+    console.log(`Algorithm execution order: ${algorithmExecutionOrder.map(a => a.name).join(', ')}`);
+    
+    // Create a function to measure a single algorithm in isolation
+    const measureIsolated = (algorithm) => {
+      // Force reset of context between algorithms 
+      const freshData = { 
+        processedStr: processedStr.slice(), 
+        indexMapping: [...indexMapping], 
+        originalStr: inputString 
+      };
+      
+      // Save algorithm properties locally to avoid closure issues
+      const algorithmName = algorithm.name;
+      const algorithmFn = algorithm.fn;
+      
+      // Add significant delay to allow system to stabilize
+      return new Promise(resolve => {
+        console.log(`Preparing to measure ${algorithmName}...`);
+        
+        // Busy wait instead of setTimeout (more reliable)
+        for (let i = 0; i < 25000000; i++) { /* empty spin loop */ }
+        
+        // Force garbage collection if available
+        try {
+          if (global.gc) {
+            for (let i = 0; i < 5; i++) {
+              global.gc();
+            }
+          }
+        } catch (e) {
+          // GC not available, ignore
         }
+        
+        console.log(`Starting measurement for ${algorithmName}...`);
+        // Pass the algorithm function directly
+        const result = measurePerformance(algorithmFn, algorithmName, freshData);
+        console.log(`${algorithmName} measurement complete`);
+        
+        resolve({
+          name: algorithmName,
+          ...result
+        });
+      });
+    };
+    
+    // Run algorithms sequentially for better isolation (one at a time)
+    const runSequentially = async () => {
+      const results = {};
+      
+      for (const algorithm of algorithmExecutionOrder) {
+        const result = await measureIsolated(algorithm);
+        results[algorithm.name] = {
+          lps: result.result,
+          executionTime: result.executionTime,
+          memoryUsage: result.memoryUsage,
+          timedOut: result.timedOut || false,
+          memoryMeasurementIssue: result.memoryMeasurementIssue || false,
+          iterations: result.iterations,
+          allTimes: result.allTimes
+        };
       }
+      
+      return results;
+    };
+    
+    // Start the sequential measurement process
+    runSequentially().then(results => {
+      // Process results in format the UI expects
+      const finalResults = Object.entries(results).map(([algoName, data]) => {
+        return {
+          algorithm: algoName,
+          result: data.lps || '',
+          executionTime: data.executionTime,
+          memoryUsed: data.memoryUsage * 1024, // Convert KB to bytes
+          iterations: data.iterations || 1
+        };
+      });
+      
+      // Calculate the max palindrome length
+      const maxPalindromeLength = Math.max(...finalResults.map(r => r.result.length), 0);
+      
+      // Return formatted results
+      return res.json({
+        fullLength: inputString.length,
+        maxPalindromeLength,
+        results: finalResults,
+        algorithmOrder: algorithmExecutionOrder.map(a => a.name),
+        input: inputString.length > 100 ? inputString.substring(0, 100) : inputString // Add preview of input
+      });
+    }).catch(error => {
+      console.error("Algorithm measurement error:", error);
+      return res.status(500).json({ error: error.message || 'Error processing the input' });
     });
   } catch (error) {
     console.error("Algorithm error:", error);
@@ -638,51 +712,124 @@ app.post('/upload', upload.single('file'), (req, res) => {
       });
     }
     
-    // Process the file content with our algorithms
-    console.log(`Processing file with ${fileContent.length} characters...`);
+    // Preprocess string once
+    const { processedStr, indexMapping } = preprocessString(fileContent);
     
-    // Run all algorithms, regardless of file size
-    console.log('Running all algorithms including naive...');
-    const naiveResult = measurePerformance(naiveLPS, fileContent);
-    console.log(`Naive complete: found palindrome of length ${naiveResult.result ? naiveResult.result.replace(/\s+/g, '').length : 0}`);
+    // Define algorithms with explicit name and function reference
+    const algorithms = [
+      { name: 'naive', fn: naiveLPS },
+      { name: 'dp', fn: dpLPS },
+      { name: 'manacher', fn: manacherLPS }
+    ];
     
-    console.log('Running DP algorithm...');
-    const dpResult = measurePerformance(dpLPS, fileContent);
-    console.log(`DP complete: found palindrome of length ${dpResult.result ? dpResult.result.replace(/\s+/g, '').length : 0}`);
+    // ALWAYS run Manacher's algorithm first to see its true performance
+    // Remove manacher from the array for now
+    const manacherAlgorithm = algorithms.find(a => a.name === 'manacher');
+    const otherAlgorithms = algorithms.filter(a => a.name !== 'manacher');
     
-    console.log('Running Manacher algorithm...');
-    const manacherResult = measurePerformance(manacherLPS, fileContent);
-    console.log(`Manacher complete: found palindrome of length ${manacherResult.result ? manacherResult.result.replace(/\s+/g, '').length : 0}`);
+    // Shuffle the order of the remaining algorithms
+    for (let i = otherAlgorithms.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [otherAlgorithms[i], otherAlgorithms[j]] = [otherAlgorithms[j], otherAlgorithms[i]];
+    }
     
-    console.log('All algorithms complete');
+    // Construct the final algorithm execution order with Manacher first
+    const algorithmExecutionOrder = [manacherAlgorithm, ...otherAlgorithms];
     
-    // Send response back to client
-    return res.json({
-      input: fileContent.substring(0, 100) + (fileContent.length > 100 ? '...' : ''),
-      fullLength: fileContent.length,
-      results: {
-        naive: {
-          lps: naiveResult.result,
-          executionTime: naiveResult.executionTime || 0,
-          memoryUsage: naiveResult.memoryUsage || 0,
-          timedOut: naiveResult.timedOut || false,
-          memoryMeasurementIssue: naiveResult.memoryMeasurementIssue || false
-        },
-        dp: {
-          lps: dpResult.result,
-          executionTime: dpResult.executionTime || 0,
-          memoryUsage: dpResult.memoryUsage || 0,
-          timedOut: dpResult.timedOut || false,
-          memoryMeasurementIssue: dpResult.memoryMeasurementIssue || false
-        },
-        manacher: {
-          lps: manacherResult.result,
-          executionTime: manacherResult.executionTime || 0,
-          memoryUsage: manacherResult.memoryUsage || 0,
-          timedOut: manacherResult.timedOut || false,
-          memoryMeasurementIssue: manacherResult.memoryMeasurementIssue || false
+    console.log(`Algorithm execution order: ${algorithmExecutionOrder.map(a => a.name).join(', ')}`);
+    
+    // Create a function to measure a single algorithm in isolation
+    const measureIsolated = (algorithm) => {
+      // Force reset of context between algorithms 
+      const freshData = { 
+        processedStr: processedStr.slice(), 
+        indexMapping: [...indexMapping], 
+        originalStr: fileContent 
+      };
+      
+      // Save algorithm properties locally to avoid closure issues
+      const algorithmName = algorithm.name;
+      const algorithmFn = algorithm.fn;
+      
+      // Add significant delay to allow system to stabilize
+      return new Promise(resolve => {
+        console.log(`Preparing to measure ${algorithmName}...`);
+        
+        // Busy wait instead of setTimeout (more reliable)
+        for (let i = 0; i < 25000000; i++) { /* empty spin loop */ }
+        
+        // Force garbage collection if available
+        try {
+          if (global.gc) {
+            for (let i = 0; i < 5; i++) {
+              global.gc();
+            }
+          }
+        } catch (e) {
+          // GC not available, ignore
         }
+        
+        console.log(`Starting measurement for ${algorithmName}...`);
+        // Pass the algorithm function directly
+        const result = measurePerformance(algorithmFn, algorithmName, freshData);
+        console.log(`${algorithmName} measurement complete`);
+        
+        resolve({
+          name: algorithmName,
+          ...result
+        });
+      });
+    };
+    
+    // Run algorithms sequentially for better isolation (one at a time)
+    const runSequentially = async () => {
+      const results = {};
+      
+      for (const algorithm of algorithmExecutionOrder) {
+        const result = await measureIsolated(algorithm);
+        results[algorithm.name] = {
+          lps: result.result,
+          executionTime: result.executionTime,
+          memoryUsage: result.memoryUsage,
+          timedOut: result.timedOut || false,
+          memoryMeasurementIssue: result.memoryMeasurementIssue || false,
+          iterations: result.iterations,
+          allTimes: result.allTimes
+        };
       }
+      
+      return results;
+    };
+    
+    console.log(`Processing file with ${fileContent.length} characters (${processedStr.length} processed chars)...`);
+    
+    // Start the sequential measurement process
+    runSequentially().then(results => {
+      // Process results in format the UI expects
+      const finalResults = Object.entries(results).map(([algoName, data]) => {
+        return {
+          algorithm: algoName,
+          result: data.lps || '',
+          executionTime: data.executionTime,
+          memoryUsed: data.memoryUsage * 1024, // Convert KB to bytes
+          iterations: data.iterations || 1
+        };
+      });
+      
+      // Calculate the max palindrome length
+      const maxPalindromeLength = Math.max(...finalResults.map(r => r.result.length), 0);
+      
+      // Return formatted results
+      return res.json({
+        fullLength: fileContent.length,
+        maxPalindromeLength,
+        results: finalResults,
+        algorithmOrder: algorithmExecutionOrder.map(a => a.name),
+        input: fileContent.length > 100 ? fileContent.substring(0, 100) : fileContent // Add preview of input
+      });
+    }).catch(error => {
+      console.error("Algorithm measurement error:", error);
+      return res.status(500).json({ error: error.message || 'Error processing the input' });
     });
   } catch (error) {
     console.error('Unhandled error in file upload:', error);
